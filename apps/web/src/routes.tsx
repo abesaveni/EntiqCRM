@@ -38,6 +38,15 @@ import { PortalAccess } from './pages/client/PortalAccess';
 import { PortalLogin, PortalExchange, PortalHomePage, PortalRequestPage } from './pages/portal/PortalApp';
 import { SupportPage, SupportTicketPage } from './pages/hq/Support';
 import { SupportQueue, SupportTicketOps } from './pages/control/SupportQueue';
+import { WorkpapersHome } from './pages/workpapers/WorkpapersHome';
+import { PackDetail } from './pages/workpapers/PackDetail';
+import { AdvisoryHome } from './pages/advisory/AdvisoryHome';
+import { ClientAdvisory } from './pages/advisory/ClientAdvisory';
+import { MeetingDetail } from './pages/advisory/MeetingDetail';
+import { AcademyHome } from './pages/academy/AcademyHome';
+import { CoursePlayer, MyLearningPage } from './pages/academy/CoursePlayer';
+import { LendingHome } from './pages/lending/LendingHome';
+import { ApplicationDetail } from './pages/lending/ApplicationDetail';
 
 export const router = createBrowserRouter([
   { path: '/signup', element: <SignUp /> },
@@ -107,6 +116,24 @@ export const router = createBrowserRouter([
 
       // Client portal — module 14 (staff side)
       { path: 'client', element: <PortalAccess /> },
+
+      // Workpapers — module 08
+      { path: 'workpapers', element: <WorkpapersHome /> },
+      { path: 'workpapers/:id', element: <PackDetail /> },
+
+      // Advisory — module 10
+      { path: 'advisory', element: <AdvisoryHome /> },
+      { path: 'advisory/clients/:id', element: <ClientAdvisory /> },
+      { path: 'advisory/meetings/:id', element: <MeetingDetail /> },
+
+      // Academy — module 15
+      { path: 'academy', element: <AcademyHome /> },
+      { path: 'academy/my', element: <MyLearningPage /> },
+      { path: 'academy/courses/:id', element: <CoursePlayer /> },
+
+      // Lending — module 20
+      { path: 'lending', element: <LendingHome /> },
+      { path: 'lending/:id', element: <ApplicationDetail /> },
 
       // Any other module: entitlement check → placeholder while porting
       { path: 'm/:key', element: <ModuleRoute /> },

@@ -14,7 +14,12 @@ from slowapi.middleware import SlowAPIMiddleware
 from app.core.config import enforce_production_safety, settings
 from app.core.limiter import limiter
 from app.core.tenancy import TenantContextMissing, TenantIsolationError, set_tenant
+from app.modules.academy import router as academy_router
+from app.modules.advisory import router as advisory_router
 from app.modules.client import router as client_router
+from app.modules.lending import router as lending_router
+from app.modules.lending import service as lending_service
+from app.modules.workpapers import router as workpapers_router
 from app.modules.practice import router as practice_router
 from app.modules.requests import router as requests_router
 from app.modules.support import router as support_router
@@ -36,6 +41,7 @@ async def lifespan(app: FastAPI):
     enforce_production_safety()
     notify_service.register()  # event subscribers: task assigned, stage changed, import completed
     practice_service.register()  # Start → Practice: schedule work when a client is activated
+    lending_service.register()   # Requests → Lending: advance an application when its pack completes
     from app.modules import registry
     log.info("EnTIQ API starting · env=%s · modules=%d · db=%s", settings.ENV, len(registry.all_modules()), settings.DATABASE_URL.split("://", 1)[0])
     yield
@@ -95,5 +101,9 @@ app.include_router(client_router.router, prefix=API_PREFIX)
 app.include_router(client_router.portal, prefix=API_PREFIX)
 app.include_router(support_router.tenant_router, prefix=API_PREFIX)
 app.include_router(support_router.operator_router, prefix=API_PREFIX)
+app.include_router(workpapers_router.router, prefix=API_PREFIX)
+app.include_router(advisory_router.router, prefix=API_PREFIX)
+app.include_router(academy_router.router, prefix=API_PREFIX)
+app.include_router(lending_router.router, prefix=API_PREFIX)
 if not settings.is_production:
     app.include_router(dev.router, prefix=API_PREFIX)

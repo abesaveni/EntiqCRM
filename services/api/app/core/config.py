@@ -85,6 +85,12 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
 
     # Verify providers (live when set; simulation drivers otherwise)
+    # Ledger providers (Workpapers): "auto" uses Xero when credentials exist, "simulate" forces the simulation driver.
+    LEDGER_PROVIDER_MODE: str = "auto"
+    XERO_CLIENT_ID: str = ""
+    XERO_CLIENT_SECRET: str = ""
+    XERO_REDIRECT_URI: str = "http://localhost:5180/hq/integrations/xero/callback"
+    XERO_TIMEOUT: str = "30"
     # Verify providers: "auto" uses live drivers when keys are present, "simulate" forces the simulation drivers (tests, demos).
     VERIFY_PROVIDER_MODE: str = "auto"
     DIDIT_API_KEY: str = ""
@@ -152,6 +158,8 @@ def verify_production_safety() -> list[str]:
             problems.append("APP_PUBLIC_URL is not https")
         if not settings.CLAMAV_HOST:
             problems.append("CLAMAV_HOST is not set — anti-virus scanning is required for uploads in production")
+        if settings.LEDGER_PROVIDER_MODE == "simulate":
+            problems.append("LEDGER_PROVIDER_MODE is 'simulate' — production workpapers must read a real ledger")
         if settings.VERIFY_PROVIDER_MODE == "simulate":
             problems.append("VERIFY_PROVIDER_MODE is 'simulate' — production must use live identity/screening providers")
         if settings.DIDIT_API_KEY and not settings.DIDIT_WEBHOOK_SECRET:

@@ -365,7 +365,7 @@
     "shortName": "Workpapers",
     "icon": "Table2",
     "outcome": "Prepare, review and sign off accounting and tax workpapers with linked evidence and controlled automation.",
-    "status": "porting",
+    "status": "built",
     "pricing": {
       "model": "per_seat",
       "unit": "per firm seat",
@@ -394,16 +394,8 @@
     ],
     "nav": [
       {
-        "label": "Workpapers",
+        "label": "Packs",
         "path": "/workpapers"
-      },
-      {
-        "label": "Xero",
-        "path": "/workpapers/xero"
-      },
-      {
-        "label": "BAS & lodgement",
-        "path": "/workpapers/lodgement"
       }
     ],
     "panels": [
@@ -480,7 +472,7 @@
     "shortName": "Advisory",
     "icon": "TrendingUp",
     "outcome": "Turn accounting and business data into regular management decisions, meetings and accountable actions.",
-    "status": "porting",
+    "status": "built",
     "pricing": {
       "model": "per_client",
       "unit": "per advisory client",
@@ -506,12 +498,8 @@
     ],
     "nav": [
       {
-        "label": "Advisory clients",
+        "label": "Advisory",
         "path": "/advisory"
-      },
-      {
-        "label": "Meetings",
-        "path": "/advisory/meetings"
       }
     ],
     "panels": [
@@ -699,7 +687,7 @@
     "shortName": "Academy",
     "icon": "GraduationCap",
     "outcome": "Prove staff competency, compliance training and annual refreshers with regulator-ready evidence.",
-    "status": "porting",
+    "status": "built",
     "pricing": {
       "model": "per_seat",
       "unit": "per active learner",
@@ -726,8 +714,8 @@
         "path": "/academy"
       },
       {
-        "label": "Competency",
-        "path": "/academy/competency"
+        "label": "My learning",
+        "path": "/academy/my"
       }
     ],
     "panels": [],
@@ -933,7 +921,7 @@
     "shortName": "Lending",
     "icon": "Banknote",
     "outcome": "Manage finance enquiries and applications through approval, conditions, settlement and handover.",
-    "status": "porting",
+    "status": "built",
     "pricing": {
       "model": "per_seat",
       "unit": "per broker seat",
@@ -962,10 +950,6 @@
       {
         "label": "Applications",
         "path": "/lending"
-      },
-      {
-        "label": "Review queue",
-        "path": "/lending/review"
       }
     ],
     "panels": [

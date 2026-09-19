@@ -9,6 +9,12 @@ import { start as startApi, STATUS_LABEL as START_STATUS, onboardingTone, type O
 import { NewOnboardingDialog } from '@/pages/start/StartHome';
 import { practice as practiceApi, JOB_STATUS_LABEL, jobTone, type JobOut } from '@/api/practice';
 import { NewJobDialog } from '@/pages/practice/PracticeHome';
+import { workpapers as wpApi, WP_STATUS_LABEL, wpTone, type PackOut as WpPack } from '@/api/workpapers';
+import { NewPackDialog } from '@/pages/workpapers/WorkpapersHome';
+import { advisory as advApi, healthTone, type ClientAdvisory as AdvView } from '@/api/advisory';
+import { lending as lendApi, STAGE_LABEL as LEND_STAGE, stageTone as lendTone, type ApplicationOut } from '@/api/lending';
+import { NewApplicationDialog } from '@/pages/lending/LendingHome';
+import { fmtCents } from '@/api/platform';
 import { requests as requestsApi, PACK_STATUS_LABEL, packTone, type PackOut } from '@/api/requests';
 import { NewRequestDialog } from '@/pages/requests/RequestsHome';
 import { clientPortalStaff, type PortalContactOut } from '@/api/portal';
@@ -53,12 +59,12 @@ function body(m: ModuleManifest, c: ClientOut) {
     case 'start': return <StartPanel client={c} />;
     case 'practice': return <PracticePanel client={c} />;
     case 'requests': return <RequestsPanel client={c} />;
+    case 'workpapers': return <WorkpapersPanel client={c} />;
+    case 'advisory': return <AdvisoryPanel client={c} />;
+    case 'lending': return <LendingPanel client={c} />;
     case 'client': return <ClientPortalPanel client={c} />;
-    case 'workpapers': return active ? <><Row k="Ledger" v="Not linked" /><Row k="Open workpapers" v="0" /><Row k="Xero" v="Connect in Practice HQ" /></> : <Pending what="Ledger and workpapers" />;
-    case 'advisory': return active ? <><Row k="Cash position" v="—" /><Row k="Next meeting" v="Not scheduled" /></> : <Pending what="Cash position and forecasts" />;
     case 'documents': return <><Row k="Files on record" v={c.document_count} /><p className="mt-2 text-muted-foreground">Folders, OCR and storage tiers arrive with the Documents module; base attachments are always available on the record.</p></>;
     case 'billing': return <><Row k="Outstanding" v="$0.00" /><Row k="Last invoice" v="—" /></>;
-    case 'lending': return <p className="text-muted-foreground">No finance applications for this client.</p>;
     default: return <p className="text-muted-foreground">{m.outcome}</p>;
   }
 }
@@ -197,6 +203,71 @@ function ClientPortalPanel({ client: c }: { client: ClientOut }) {
         {rows.every((r) => !r.email) && <li className="text-[12px] text-muted-foreground">Add a contact with an email to invite them.</li>}
       </ul>
       <Link to="/client" className="mt-3 inline-block text-[12px] text-primary hover:underline">Manage portal →</Link>
+    </>
+  );
+}
+
+/** Live Workpapers panel. */
+function WorkpapersPanel({ client: c }: { client: ClientOut }) {
+  const readOnly = useSession((s) => s.readOnly);
+  const can = useSession((s) => s.can);
+  const [rows, setRows] = useState<WpPack[] | null>(null);
+  const [open, setOpen] = useState(false);
+  const load = () => wpApi.packs.list({ client_id: c.id }).then(setRows).catch(() => setRows([]));
+  useEffect(() => { void load(); }, [c.id]);
+  if (!rows) return <p className="text-muted-foreground">Loading…</p>;
+  const openPacks = rows.filter((p) => !['signed_off', 'lodged', 'archived'].includes(p.status));
+  const latest = rows[0];
+  return (
+    <>
+      <Row k="Open packs" v={openPacks.length} />
+      <Row k="Ledger" v={latest?.ledger_synced_at ? `${latest.ledger_source}${latest.ledger_simulated ? ' (sim)' : ''}` : 'Not synced'} />
+      {openPacks.some((p) => p.blocking_issues > 0) && <Row k="Blocking issues" v={<span className="text-error">{openPacks.reduce((a, p) => a + p.blocking_issues, 0)}</span>} />}
+      <ul className="mt-2 space-y-1">{rows.slice(0, 3).map((p) => <li key={p.id} className="flex items-center justify-between gap-2 text-[12px]"><Link to={`/workpapers/${p.id}`} className="truncate hover:underline">{p.title}</Link><StatusPill tone={wpTone(p.status)}>{WP_STATUS_LABEL[p.status]}</StatusPill></li>)}</ul>
+      {!readOnly && can('wp:prepare') && <Button size="sm" variant="outline" className="mt-3" onClick={() => setOpen(true)}><Plus className="mr-1 size-3.5" /> New pack</Button>}
+      <NewPackDialog open={open} onOpenChange={setOpen} onDone={async () => { await load(); }} presetClient={c} />
+    </>
+  );
+}
+
+/** Live Advisory panel. */
+function AdvisoryPanel({ client: c }: { client: ClientOut }) {
+  const [v, setV] = useState<AdvView | null>(null);
+  useEffect(() => { void advApi.client(c.id).then(setV).catch(() => setV(null)); }, [c.id]);
+  if (!v) return <p className="text-muted-foreground">Loading…</p>;
+  const s = v.latest;
+  const openAlerts = v.alerts.filter((a) => a.status === 'open');
+  if (!s) return (<><p className="text-muted-foreground">No snapshot yet — take one to see cash, margin and the measures that matter.</p><Link to={`/advisory/clients/${c.id}`} className="mt-3 inline-block text-[12px] text-primary hover:underline">Open Advisory →</Link></>);
+  return (
+    <>
+      <Row k="Health" v={<StatusPill tone={healthTone(s.health_band)}>{s.health_score ?? '—'}/100</StatusPill>} />
+      {s.kpis.net_margin_pct !== undefined && <Row k="Net margin" v={`${s.kpis.net_margin_pct}%`} />}
+      {s.kpis.cash_runway_months !== undefined && <Row k="Cash runway" v={`${s.kpis.cash_runway_months} months`} />}
+      <Row k="Open alerts" v={openAlerts.length ? <span className={openAlerts.some((a) => a.severity === 'action') ? 'text-error' : 'text-warn'}>{openAlerts.length}</span> : 0} />
+      <Row k="Open actions" v={v.actions.filter((a) => a.status !== 'done' && a.status !== 'cancelled').length} />
+      <Link to={`/advisory/clients/${c.id}`} className="mt-3 inline-block text-[12px] text-primary hover:underline">Open Advisory →</Link>
+    </>
+  );
+}
+
+/** Live Lending panel. */
+function LendingPanel({ client: c }: { client: ClientOut }) {
+  const readOnly = useSession((s) => s.readOnly);
+  const can = useSession((s) => s.can);
+  const [rows, setRows] = useState<ApplicationOut[] | null>(null);
+  const [open, setOpen] = useState(false);
+  const load = () => lendApi.applications.list({ client_id: c.id }).then(setRows).catch(() => setRows([]));
+  useEffect(() => { void load(); }, [c.id]);
+  if (!rows) return <p className="text-muted-foreground">Loading…</p>;
+  const active = rows.filter((a) => !['settled', 'declined', 'withdrawn'].includes(a.stage));
+  return (
+    <>
+      <Row k="Active applications" v={active.length} />
+      {active.length > 0 && <Row k="Value" v={fmtCents(active.reduce((t, a) => t + a.amount_cents, 0))} />}
+      <ul className="mt-2 space-y-1">{rows.slice(0, 3).map((a) => <li key={a.id} className="flex items-center justify-between gap-2 text-[12px]"><Link to={`/lending/${a.id}`} className="truncate hover:underline">{a.reference} · {fmtCents(a.amount_cents)}</Link><StatusPill tone={lendTone(a.stage)}>{LEND_STAGE[a.stage]}</StatusPill></li>)}</ul>
+      {rows.length === 0 && <p className="mt-1 text-muted-foreground">No finance applications for this client.</p>}
+      {!readOnly && can('lending:intake') && <Button size="sm" variant="outline" className="mt-3" onClick={() => setOpen(true)}><Plus className="mr-1 size-3.5" /> New application</Button>}
+      <NewApplicationDialog open={open} onOpenChange={setOpen} onDone={async () => { await load(); }} presetClient={c} />
     </>
   );
 }

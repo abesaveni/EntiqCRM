@@ -12,6 +12,7 @@ os.environ["SMTP_HOST"] = ""
 os.environ["SMTP_USERNAME"] = ""
 os.environ["EMAIL_DELIVERY_ENABLED"] = "false"
 os.environ["CLAMAV_HOST"] = ""
+os.environ["LEDGER_PROVIDER_MODE"] = "simulate"   # never call Xero from tests
 os.environ["VERIFY_PROVIDER_MODE"] = "simulate"   # never touch Didit/OpenSanctions from tests, even with keys in .env.local
 os.environ["DIDIT_WEBHOOK_SECRET"] = ""
 

@@ -174,3 +174,10 @@ def support_reply(*, name: str, number: int, subject: str, author: str, body: st
     html = _wrap(f"Reply on ticket #{number}", [f"Hi {escape(name)},", f"<strong>{escape(author)}</strong> from EnTIQ Support replied:", f"<em>{escape(body)}</em>"], ("View ticket", url))
     return subj, text, html
 
+
+def academy_assigned(*, name: str, course: str, due: str, minutes: int, app_url: str) -> tuple[str, str, str]:
+    subject = f"Training assigned: {course}"
+    text = f"Hi {name},\n\nYou have been assigned \"{course}\" — about {minutes} minutes, due {due}.\n\nStart it here:\n{app_url}/academy/my\n\nEnTIQ Academy"
+    html = _wrap(subject, [f"Hi {escape(name)},", f"You have been assigned <strong>{escape(course)}</strong> — about {minutes} minutes, due <strong>{escape(due)}</strong>."], ("Start the course", f"{app_url}/academy/my"))
+    return subject, text, html
+
