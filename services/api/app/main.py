@@ -14,7 +14,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from app.core.config import enforce_production_safety, settings
 from app.core.limiter import limiter
 from app.core.tenancy import TenantContextMissing, TenantIsolationError, set_tenant
-from app.routers import audit_router, auth, dev, health, me, subscriptions, users
+from app.routers import audit_router, auth, crm, dev, health, me, subscriptions, users
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("entiq")
@@ -67,5 +67,6 @@ app.include_router(me.router, prefix=API_PREFIX)
 app.include_router(subscriptions.router, prefix=API_PREFIX)
 app.include_router(users.router, prefix=API_PREFIX)
 app.include_router(audit_router.router, prefix=API_PREFIX)
+app.include_router(crm.router, prefix=API_PREFIX)
 if not settings.is_production:
     app.include_router(dev.router, prefix=API_PREFIX)

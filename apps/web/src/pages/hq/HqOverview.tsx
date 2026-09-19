@@ -1,10 +1,12 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CreditCard, Users, Plug, ShieldCheck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@entiq/ui/card';
 import { Button } from '@entiq/ui/button';
 import { getModule, purchasableModules } from '@entiq/modules';
 import { useSession, trialDaysLeft, fmtAud, monthlyBaseExGst, GST_RATE } from '@/state/session';
-import { STAFF, INTEGRATIONS } from '@/mock/data';
+import { INTEGRATIONS } from '@/mock/data';
+import { api, type MemberOut } from '@/api/client';
 import { PageHeader } from '@/components/PageHeader';
 import { StatusPill, lifecycleTone } from '@/components/StatusPill';
 import { ModuleIcon } from '@/lib/icons';
@@ -14,6 +16,8 @@ export function HqOverview() {
   const entitled = useSession((s) => s.entitled);
   const entitlements = useSession((s) => s.entitlements);
   void entitlements;
+  const [members, setMembers] = useState<MemberOut[] | null>(null);
+  useEffect(() => { void api.users.list().then(setMembers).catch(() => setMembers([])); }, []);
   const owned = purchasableModules().filter((m) => entitled(m.key));
   const base = monthlyBaseExGst();
   const attention = INTEGRATIONS.filter((i) => i.status === 'attention' || i.status === 'not_connected');
@@ -48,11 +52,11 @@ export function HqOverview() {
         <Card>
           <CardHeader className="flex-row items-center justify-between pb-3">
             <CardTitle className="flex items-center gap-2 text-[15px]"><Users className="size-4 text-primary" /> Users</CardTitle>
-            <span className="text-[12px] text-muted-foreground">{STAFF.length} people</span>
+            <span className="text-[12px] text-muted-foreground">{members ? `${members.length} people` : '…'}</span>
           </CardHeader>
           <CardContent className="space-y-3 text-[13px]">
-            <div className="flex items-baseline justify-between"><span className="text-muted-foreground">Active</span><span className="font-medium">{STAFF.filter((s) => s.status === 'Active').length}</span></div>
-            <div className="flex items-baseline justify-between"><span className="text-muted-foreground">Invited, not yet joined</span><span className="font-medium">{STAFF.filter((s) => s.status === 'Invited').length}</span></div>
+            <div className="flex items-baseline justify-between"><span className="text-muted-foreground">Active</span><span className="font-medium">{members?.filter((m) => m.status === 'active').length ?? '–'}</span></div>
+            <div className="flex items-baseline justify-between"><span className="text-muted-foreground">Invited, not yet joined</span><span className="font-medium">{members?.filter((m) => m.status === 'invited').length ?? '–'}</span></div>
             <div className="flex items-baseline justify-between"><span className="text-muted-foreground">Last access review</span><span className="font-medium text-warn">Overdue</span></div>
             <Button asChild variant="outline" size="sm" className="w-full"><Link to="/hq/users">Users &amp; access <ArrowRight className="ml-1 size-3.5" /></Link></Button>
           </CardContent>

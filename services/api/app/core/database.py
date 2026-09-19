@@ -16,12 +16,13 @@ from __future__ import annotations
 
 from collections.abc import Generator
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import Select, Table, create_engine, event
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker, with_loader_criteria
 from sqlalchemy.pool import StaticPool
 
 from app.core.config import settings
 from app.core.tenancy import (
+    TENANT_EXEMPT_TABLES,
     TenantContextMissing,
     TenantIsolationError,
     bypass_active,
@@ -90,12 +91,25 @@ def _tenant_read_filter(state):
         return
     tenant_id = _effective_tenant(state.session)
     scoped = [m.class_ for m in state.all_mappers if is_tenant_scoped(m.class_)]
-    if not scoped:
+    # Core-level fallback: a SELECT with no ORM entity (func.count(), column-only selects,
+    # select_from(Table)) never receives loader criteria. Any tenant-scoped TABLE in its
+    # FROM clause gets an explicit WHERE instead. NOTE: a scoped table hidden inside a
+    # .subquery() is NOT reachable here — never count through a subquery (see crm_service).
+    scoped_tables = []
+    stmt = state.statement
+    if isinstance(stmt, Select):
+        covered = {c.__table__ for c in scoped}
+        for frm in stmt.get_final_froms():
+            if isinstance(frm, Table) and "tenant_id" in frm.c and frm.name not in TENANT_EXEMPT_TABLES and frm not in covered:
+                scoped_tables.append(frm)
+    if not scoped and not scoped_tables:
         return
     if tenant_id is None:
-        raise TenantContextMissing(
-            f"Tenant-scoped query on {', '.join(c.__tablename__ for c in scoped)} with no tenant in context"
-        )
+        names = [c.__tablename__ for c in scoped] + [t.name for t in scoped_tables]
+        raise TenantContextMissing(f"Tenant-scoped query on {', '.join(names)} with no tenant in context")
+    for tbl in scoped_tables:
+        stmt = stmt.where(tbl.c.tenant_id == tenant_id)
+    state.statement = stmt
     for cls in scoped:
         # A concrete SQL expression, deliberately NOT a lambda: SQLAlchemy caches lambda
         # criteria by code object and only tracks true closure variables, so a lambda

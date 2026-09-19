@@ -1,6 +1,6 @@
 import { cn } from '@entiq/ui/utils';
 
-type Tone = 'neutral' | 'success' | 'warn' | 'error' | 'info' | 'teal';
+export type Tone = 'neutral' | 'success' | 'warn' | 'error' | 'info' | 'teal';
 
 const tones: Record<Tone, string> = {
   neutral: 'bg-muted text-foreground',
@@ -19,7 +19,7 @@ export function StatusPill({ tone = 'neutral', children, className }: { tone?: T
   );
 }
 
-export function riskTone(risk?: string): Tone {
+export function riskTone(risk?: string | null): Tone {
   if (risk === 'High') return 'error';
   if (risk === 'Medium') return 'warn';
   if (risk === 'Low') return 'success';
@@ -31,9 +31,8 @@ export function stageTone(stage: string): Tone {
     case 'Active': return 'success';
     case 'Onboarding': return 'teal';
     case 'Proposal': return 'info';
-    case 'Lead': return 'neutral';
     case 'Review': return 'warn';
-    case 'Dormant': return 'neutral';
+    case 'Lost': return 'error';
     default: return 'neutral';
   }
 }
@@ -45,7 +44,10 @@ export function lifecycleTone(status: string): Tone {
     case 'past_due': return 'warn';
     case 'suspended': return 'warn';
     case 'cancelled': return 'error';
-    case 'retained': return 'neutral';
     default: return 'neutral';
   }
+}
+
+export function priorityTone(p: string): Tone {
+  return p === 'High' ? 'error' : p === 'Low' ? 'neutral' : 'info';
 }

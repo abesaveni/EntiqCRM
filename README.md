@@ -43,7 +43,12 @@ docker compose up -d postgres redis      # then DATABASE_URL=postgresql+psycopg:
 Sign up at `/signup` (card captured, $0 charged, 15-day trial) — the practice, owner and base-bundle
 subscriptions are created for real. **Practice HQ → Settings → Demo controls** walks the lifecycle
 (trialing → active → past_due → suspended → cancelled) through `POST /dev/lifecycle` (non-production only).
-Client and contact data on Home / Clients is still mock until the CRM core (M3).
+
+**CRM (M3, live):** clients · contacts · relationship graph · shared timeline · tasks · notes · pipeline ·
+segments · duplicate detection · global search · **Xero / MYOB / CSV import** (`/clients/import`,
+auto-detects the export format, de-duplicates on ABN then name). Every module writes to the same
+timeline through `app.core.events.emit()`; the client record renders each subscribed module's panel
+and an upsell tile for the rest.
 
 ### How a request is enforced
 

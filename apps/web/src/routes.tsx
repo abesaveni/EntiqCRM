@@ -3,6 +3,11 @@ import { AppShell } from './shell/AppShell';
 import { Home } from './pages/Home';
 import { ClientsList } from './pages/clients/ClientsList';
 import { Client360 } from './pages/clients/Client360';
+import { ImportWizard } from './pages/clients/ImportWizard';
+import { Contacts } from './pages/Contacts';
+import { Pipeline } from './pages/Pipeline';
+import { Tasks } from './pages/Tasks';
+import { Segments } from './pages/Segments';
 import { HqOverview } from './pages/hq/HqOverview';
 import { Catalogue } from './pages/hq/Catalogue';
 import { Users } from './pages/hq/Users';
@@ -13,7 +18,6 @@ import { SignUp } from './pages/auth/SignUp';
 import { Login } from './pages/auth/Login';
 import { AcceptInvite } from './pages/auth/AcceptInvite';
 import { AccountClosed } from './pages/AccountClosed';
-import { Placeholder } from './pages/Placeholder';
 
 export const router = createBrowserRouter([
   { path: '/signup', element: <SignUp /> },
@@ -28,11 +32,12 @@ export const router = createBrowserRouter([
 
       // CRM — base plan
       { path: 'clients', element: <ClientsList /> },
+      { path: 'clients/import', element: <ImportWizard /> },
       { path: 'clients/:id', element: <Client360 /> },
-      { path: 'contacts', element: <Placeholder title="Contacts" description="Every person and organisation across prospects, clients, investors, lenders and partners." /> },
-      { path: 'pipeline', element: <Placeholder title="Pipeline" description="Leads and opportunities by stage, owner and value." /> },
-      { path: 'tasks', element: <Placeholder title="Tasks" description="Follow-ups and work due across the practice." /> },
-      { path: 'segments', element: <Placeholder title="Segments & lists" description="Saved client and contact lists for outreach and review." /> },
+      { path: 'contacts', element: <Contacts /> },
+      { path: 'pipeline', element: <Pipeline /> },
+      { path: 'tasks', element: <Tasks /> },
+      { path: 'segments', element: <Segments /> },
 
       // Practice HQ — base plan
       { path: 'hq', element: <HqOverview /> },

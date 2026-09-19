@@ -20,10 +20,13 @@ ROLE_BASE: dict[str, frozenset[str]] = {
 def permissions_for(role: str, granted_modules: set[str]) -> set[str]:
     """Everything a member may do: HQ perms by role + every permission of every module they hold."""
     perms = set(ROLE_BASE.get(role, frozenset()))
-    modules = set(granted_modules)
+    modules = set(granted_modules) | (set(registry.BASE_BUNDLE) - {"hq"})  # CRM is base for every member
     if role in ("owner", "admin"):
         # Owners/admins hold every module the tenant has; staff hold what they are ticked for.
-        modules |= {m["key"] for m in registry.all_modules()}
+        modules |= {m["key"] for m in registry.all_modules()} | set(registry.PLATFORM_SERVICES)
+    # Practice HQ and Control Centre permissions are ROLE-tiered (ROLE_BASE / operator flag) —
+    # they must never arrive through module expansion, or every member could buy modules.
+    modules -= {"hq", "control"}
     for key in modules:
         try:
             perms.update(registry.get_module(key)["permissions"])
