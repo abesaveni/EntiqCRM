@@ -37,6 +37,8 @@ def signup(request: Request, body: schemas.SignUpIn, db: Session = Depends(get_d
     """
     if problems := password_problems(body.password):
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail={"error": "weak_password", "needs": problems})
+    if body.payment_method is None and settings.REQUIRE_CARD_AT_SIGNUP:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail={"error": "card_required", "message": "A payment method is required to start the trial."})
     with platform_scope():
         if db.execute(select(User.id).where(User.email == body.email)).first():
             raise HTTPException(status.HTTP_409_CONFLICT, detail={"error": "email_in_use", "hint": "Sign in and create another practice from your account."})
@@ -44,7 +46,9 @@ def signup(request: Request, body: schemas.SignUpIn, db: Session = Depends(get_d
         now = utcnow()
         tenant = Tenant(name=body.practice_name.strip(), slug=svc.slugify(body.practice_name, db), abn=(body.abn or "").strip() or None,
                         status="trialing", status_changed_at=now, trial_ends_at=entitlements.trial_end_for_new_tenant(),
-                        card_on_file=True, card_brand=body.payment_method.brand, card_last4=body.payment_method.last4)
+                        card_on_file=body.payment_method is not None,
+                        card_brand=body.payment_method.brand if body.payment_method else None,
+                        card_last4=body.payment_method.last4 if body.payment_method else None)
         user = User(email=body.email, password_hash=hash_password(body.password), full_name=body.full_name.strip(), last_login_at=now)
         db.add_all([tenant, user])
         db.flush()

@@ -12,6 +12,11 @@ os.environ["SMTP_HOST"] = ""
 os.environ["SMTP_USERNAME"] = ""
 os.environ["EMAIL_DELIVERY_ENABLED"] = "false"
 os.environ["CLAMAV_HOST"] = ""
+# Pin the commercial settings: .env.local may carry testing switches ($0 plan, no card),
+# but the suite must assert the shipped defaults and set its own overrides explicitly.
+os.environ["BASE_PLAN_PRICE_CENTS"] = "9900"
+os.environ["REQUIRE_CARD_AT_SIGNUP"] = "true"
+os.environ["BILLING_MODE"] = "simulate"
 os.environ["LEDGER_PROVIDER_MODE"] = "simulate"   # never call Xero from tests
 os.environ["VERIFY_PROVIDER_MODE"] = "simulate"   # never touch Didit/OpenSanctions from tests, even with keys in .env.local
 os.environ["DIDIT_WEBHOOK_SECRET"] = ""

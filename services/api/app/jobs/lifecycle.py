@@ -89,15 +89,17 @@ def run(db: Session, now: datetime | None = None) -> dict:
                         _mark_notice(db, t.id, kind)
                         stats["reminders"] += 1
                 if t.trial_ends_at <= now:
-                    result = _charge(db, t, base, f"EnTIQ base plan — {t.name}", f"trial-{t.id}")
+                    result = _free_result() if settings.free_mode else _charge(db, t, base, f"EnTIQ base plan — {t.name}", f"trial-{t.id}")
                     if result.ok:
                         period_end = now + timedelta(days=30)
                         t.current_period_end = period_end
-                        _set_status(db, t, "active", "trial ended — base plan started" + (" (charge simulated: no payment provider configured)" if result.simulated else f" (charged {inc})"), now)
-                        billing_service.record(db, tenant_id=t.id, kind="charge.simulated" if result.simulated else "charge.succeeded", module_key="crm", amount_cents=base,
-                                               status="simulated" if result.simulated else "charged", stripe_ref=result.reference,
+                        reason = ("trial ended — base plan started (free while BASE_PLAN_PRICE_CENTS is 0)" if settings.free_mode
+                                  else "trial ended — base plan started" + (" (charge simulated: no payment provider configured)" if result.simulated else f" (charged {inc})"))
+                        _set_status(db, t, "active", reason, now)
+                        billing_service.record(db, tenant_id=t.id, kind="charge.waived" if settings.free_mode else ("charge.simulated" if result.simulated else "charge.succeeded"), module_key="crm", amount_cents=base,
+                                               status="waived" if settings.free_mode else ("simulated" if result.simulated else "charged"), stripe_ref=result.reference,
                                                detail={"period_end": period_end.isoformat(), "card_last4": t.card_last4, "provider": result.provider,
-                                                       "note": "BILLING_MODE=simulate — no money moved" if result.simulated else "Charged through Stripe"})
+                                                       "note": "Base plan is $0 in this environment — nothing to charge" if settings.free_mode else ("BILLING_MODE=simulate — no money moved" if result.simulated else "Charged through Stripe")})
                         if not _notice_sent(db, t.id, "trial_ended"):
                             stats["emails"] += _email_owners(db, t, "trial_ended", lambda first: templates.trial_ended_active(name=first, practice=t.name, amount_inc_gst=inc, period_end=period_end.strftime("%d %b %Y"), simulated=result.simulated, app_url=app_url))
                             _mark_notice(db, t.id, "trial_ended")
@@ -189,6 +191,12 @@ def generate_recurring_jobs(db: Session, now: datetime) -> int:
         db.info.pop("tenant_id", None)
     db.commit()
     return n
+
+
+def _free_result():
+    """$0 base plan: there is nothing to charge, so the trial simply converts."""
+    from app.services import payments
+    return payments.ChargeResult(ok=True, simulated=True, provider="free", reference=None, status="succeeded", detail={"note": "Base plan is $0 in this environment."})
 
 
 def _charge(db: Session, t: Tenant, amount_cents: int, description: str, idempotency_key: str):

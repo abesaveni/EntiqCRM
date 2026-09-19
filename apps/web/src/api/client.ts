@@ -26,7 +26,7 @@ export interface SubscriptionOut {
   module_key: ModuleKey; status: LifecycleStatus; seats: number | null; started_at: string;
   trial_ends_at: string | null; current_period_end: string | null; required_by: ModuleKey | null;
 }
-export interface PricingOut { base_plan_cents: number; gst_rate_bps: number; base_plan_inc_gst_cents: number; currency: string; trial_days: number }
+export interface PricingOut { base_plan_cents: number; gst_rate_bps: number; base_plan_inc_gst_cents: number; currency: string; trial_days: number; require_card: boolean; free_mode: boolean }
 export interface SessionOut {
   user: UserOut; tenant: TenantOut; role: Role; granted_modules: ModuleKey[]; permissions: string[];
   subscriptions: SubscriptionOut[]; entitlements: Record<ModuleKey, boolean>; read_only: boolean; pricing: PricingOut;
@@ -117,8 +117,9 @@ async function request<T>(method: string, path: string, body?: unknown, opts: { 
 export const api = {
   health: () => request<{ ok: boolean; env: string }>('GET', '/health', undefined, { auth: false }),
 
+  pricing: () => request<PricingOut>('GET', '/pricing', undefined, { auth: false }),
   auth: {
-    signup: (b: { practice_name: string; abn?: string; full_name: string; email: string; password: string; payment_method: { last4: string; brand?: string; payment_method_id?: string } }) =>
+    signup: (b: { practice_name: string; abn?: string; full_name: string; email: string; password: string; payment_method?: { last4: string; brand?: string; payment_method_id?: string } }) =>
       request<LoginOut>('POST', '/auth/signup', b, { auth: false }),
     login: (b: { email: string; password: string; tenant_id?: string }) => request<LoginOut>('POST', '/auth/login', b, { auth: false }),
     logout: (refresh_token?: string) => request<void>('POST', '/auth/logout', refresh_token ? { refresh_token } : undefined),

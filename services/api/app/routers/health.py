@@ -6,6 +6,9 @@ from app.core.config import settings, verify_production_safety
 from app.core.database import get_db
 from app.modules import registry
 
+from app import schemas
+from app.services import session_service
+
 router = APIRouter(tags=["system"])
 
 
@@ -27,3 +30,9 @@ def health_deep(db: Session = Depends(get_db)):
         "email_delivery": settings.email_delivery_active,
         "safety_problems": verify_production_safety() if not settings.is_production else [],
     }
+
+
+@router.get("/pricing", response_model=schemas.PricingOut)
+def pricing():
+    """Public: what the base plan costs here, whether a card is required, and whether this is a free environment."""
+    return session_service.pricing_out()

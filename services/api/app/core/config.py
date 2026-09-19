@@ -48,6 +48,9 @@ class Settings(BaseSettings):
 
     # Commercial (decided 19 Sep 2026)
     TRIAL_DAYS: int = 15
+    # Testing: with the base price at 0 the trial converts free, and the card can be skipped at signup.
+    # Both are refused in production by verify_production_safety().
+    REQUIRE_CARD_AT_SIGNUP: bool = True
     BASE_PLAN_PRICE_CENTS: int = 9900          # $99.00 ex GST
     GST_RATE_BPS: int = 1000                   # 10%
     PAST_DUE_GRACE_DAYS: int = 7
@@ -126,6 +129,11 @@ class Settings(BaseSettings):
         return self.ALLOWED_ORIGINS.split(",") if self.ALLOWED_ORIGINS else []
 
     @property
+    def free_mode(self) -> bool:
+        """Nothing to charge: the base plan is $0, so the trial converts without a payment."""
+        return self.BASE_PLAN_PRICE_CENTS <= 0
+
+    @property
     def stripe_enabled(self) -> bool:
         return bool(self.STRIPE_SECRET_KEY)
 
@@ -165,6 +173,10 @@ def verify_production_safety() -> list[str]:
             problems.append("VERIFY_PROVIDER_MODE is 'simulate' — production must use live identity/screening providers")
         if settings.DIDIT_API_KEY and not settings.DIDIT_WEBHOOK_SECRET:
             problems.append("DIDIT_WEBHOOK_SECRET is unset while DIDIT_API_KEY is set — the Verify webhook would accept unsigned callbacks")
+        if settings.BASE_PLAN_PRICE_CENTS <= 0:
+            problems.append("BASE_PLAN_PRICE_CENTS is 0 — production must charge for the base plan")
+        if not settings.REQUIRE_CARD_AT_SIGNUP:
+            problems.append("REQUIRE_CARD_AT_SIGNUP is false — production must capture a card at signup")
         if settings.BILLING_MODE == "simulate":
             problems.append("BILLING_MODE is 'simulate' — production must charge through Stripe")
     return problems

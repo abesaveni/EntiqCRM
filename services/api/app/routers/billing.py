@@ -38,7 +38,8 @@ def summary(p: Principal = Depends(require_role("owner", "admin")), db: Session 
     return S.BillingSummary(
         tenant_status=t.status, base_plan_cents=base, base_plan_inc_gst_cents=base + billing_service.gst_for(base), gst_rate_bps=settings.GST_RATE_BPS,
         trial_ends_at=t.trial_ends_at, current_period_end=t.current_period_end, next_charge_at=next_charge,
-        next_charge_estimate_cents=estimate + billing_service.gst_for(estimate), card_on_file=t.card_on_file, card_last4=t.card_last4, billing_mode=settings.BILLING_MODE,
+        next_charge_estimate_cents=0 if settings.free_mode else estimate + billing_service.gst_for(estimate),
+        card_on_file=t.card_on_file, card_last4=t.card_last4, billing_mode=settings.BILLING_MODE, free_mode=settings.free_mode,
         lines=lines, recent=[_ev(e) for e in billing_service.events_for(db, t.id, 10)],
     )
 

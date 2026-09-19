@@ -76,6 +76,18 @@ server it is talking to, and names the environment variables still missing.
   document filing, search and retention → invoice and payment → support ticket → integration hub.
 - `tsc --noEmit` clean, production Vite build clean.
 
+## Testing mode (current local default)
+
+`.env.local` runs this environment free: `BASE_PLAN_PRICE_CENTS=0` and `REQUIRE_CARD_AT_SIGNUP=false`.
+Signup is one step with no card, `GET /pricing` tells the app so, and the trial still converts on
+schedule — recording `charge.waived` ($0) instead of charging. Practice HQ and the trial banner say
+"free while we test" rather than quoting a charge that will not happen. `verify_production_safety()`
+refuses to boot production with either switch set, so the testing configuration cannot escape.
+
+The real credentials recovered from the nine repos are loaded here: **Didit** (identity), **OpenSanctions**
+(screening), **Equifax** (SOAP), **OpenAI**, and **AWS SES SMTP**. Verify therefore runs on the live
+providers, not simulation.
+
 ## What production still needs
 
 | Missing | Blocks | Where it goes |
@@ -84,5 +96,6 @@ server it is talking to, and names the environment variables still missing.
 | `XERO_CLIENT_ID` / `XERO_CLIENT_SECRET` | Live ledger sync | `.env` — OAuth URL and TrialBalance parsing already written |
 | `AWS_S3_BUCKET` + `STORAGE_BACKEND=s3` | Durable file storage | `.env` |
 | `CLAMAV_HOST` | Upload scanning (production refuses uploads without it) | `.env` |
-| `DIDIT_API_KEY` / `OPENSANCTIONS_API_KEY` in the deployed env | Live identity and screening | present in `.env.local`, not yet in a deployed environment |
+| `DIDIT_API_KEY` / `OPENSANCTIONS_API_KEY` in the deployed env | Live identity and screening | in `.env.local` and in use locally; not yet in a deployed environment |
+| `BASE_PLAN_PRICE_CENTS=9900` + `REQUIRE_CARD_AT_SIGNUP=true` | Charging at all | flip the two testing switches back |
 | A domain | Public links (signing, onboarding, requests, portal) | `APP_PUBLIC_URL` |

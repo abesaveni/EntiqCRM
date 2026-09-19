@@ -11,8 +11,7 @@ export interface BillingEventOut { id: number; module_key: ModuleKey | null; kin
 export interface BillingLine { module_key: ModuleKey; name: string; status: LifecycleStatus; pricing_model: string; unit: string; indicative_monthly_cents: number | null; seats: number | null }
 export interface BillingSummary {
   tenant_status: LifecycleStatus; base_plan_cents: number; base_plan_inc_gst_cents: number; gst_rate_bps: number; trial_ends_at: string | null; current_period_end: string | null;
-  next_charge_at: string | null; next_charge_estimate_cents: number; card_on_file: boolean; card_last4: string | null; billing_mode: 'simulate' | 'stripe'; lines: BillingLine[]; recent: BillingEventOut[];
-}
+  next_charge_at: string | null; next_charge_estimate_cents: number; card_on_file: boolean; card_last4: string | null; billing_mode: 'simulate' | 'stripe'; lines: BillingLine[]; recent: BillingEventOut[]; free_mode?: boolean }
 export interface IntegrationOut { key: string; name: string; category: string; status: 'connected' | 'simulated' | 'attention' | 'not_connected'; detail: string; used_by: string[]; scope: 'platform' | 'practice'; configurable_here: boolean; missing: string[]; connections: number; last_activity: string | null }
 export interface IntegrationSummary { connected: number; simulated: number; attention: number; not_connected: number; production_ready: boolean; blocking: string[] }
 export interface OutboundOut { id: string; to_address: string; subject: string; template: string | null; status: 'queued' | 'sent' | 'failed' | 'skipped'; attempts: number; last_error: string | null; created_at: string; sent_at: string | null; body_text: string }

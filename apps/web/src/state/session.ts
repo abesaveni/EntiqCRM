@@ -20,9 +20,9 @@ export interface Tenant {
 }
 export interface SessionUser { id: string; name: string; email: string; role: UserRole; isOperator: boolean }
 export interface Subscription { module: ModuleKey; status: LifecycleStatus; seats?: number; startedAt: string; requiredBy?: ModuleKey | null }
-export interface Pricing { baseCents: number; gstBps: number; baseIncGstCents: number; trialDays: number }
+export interface Pricing { baseCents: number; gstBps: number; baseIncGstCents: number; trialDays: number; requireCard: boolean; freeMode: boolean }
 
-export interface SignUpInput { practiceName: string; abn?: string; fullName: string; email: string; password: string; cardLast4: string; cardBrand?: string }
+export interface SignUpInput { practiceName: string; abn?: string; fullName: string; email: string; password: string; cardLast4?: string; cardBrand?: string }
 
 type Status = 'idle' | 'loading' | 'authenticated' | 'anonymous';
 
@@ -59,7 +59,7 @@ interface SessionState {
   simulateLifecycle: (status: LifecycleStatus) => Promise<void>;
 }
 
-const DEFAULT_PRICING: Pricing = { baseCents: 9900, gstBps: 1000, baseIncGstCents: 10890, trialDays: 15 };
+const DEFAULT_PRICING: Pricing = { baseCents: 9900, gstBps: 1000, baseIncGstCents: 10890, trialDays: 15, requireCard: true, freeMode: false };
 
 function mapSession(s: SessionOut) {
   return {
@@ -74,7 +74,7 @@ function mapSession(s: SessionOut) {
     grantedModules: s.granted_modules,
     permissions: s.permissions,
     readOnly: s.read_only,
-    pricing: { baseCents: s.pricing.base_plan_cents, gstBps: s.pricing.gst_rate_bps, baseIncGstCents: s.pricing.base_plan_inc_gst_cents, trialDays: s.pricing.trial_days } satisfies Pricing,
+    pricing: { baseCents: s.pricing.base_plan_cents, gstBps: s.pricing.gst_rate_bps, baseIncGstCents: s.pricing.base_plan_inc_gst_cents, trialDays: s.pricing.trial_days, requireCard: s.pricing.require_card ?? true, freeMode: s.pricing.free_mode ?? false } satisfies Pricing,
   };
 }
 
@@ -105,7 +105,7 @@ export const useSession = create<SessionState>()((set, get) => {
     signUp: async (input) => {
       const out = await api.auth.signup({
         practice_name: input.practiceName, abn: input.abn, full_name: input.fullName, email: input.email, password: input.password,
-        payment_method: { last4: input.cardLast4, brand: input.cardBrand ?? 'card' },
+        payment_method: input.cardLast4 ? { last4: input.cardLast4, brand: input.cardBrand ?? 'card' } : undefined,
       });
       if (out.tokens && out.session) { tokenStore.set(out.tokens); apply(out.session); }
     },

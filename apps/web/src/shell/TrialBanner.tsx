@@ -12,6 +12,7 @@ export function TrialBanner() {
 
   const base = monthlyBaseExGst();
   const incGst = base * (1 + GST_RATE);
+  const { freeMode, trialDays } = useSession.getState().pricing;
 
   if (tenant.status === 'trialing') {
     const days = trialDaysLeft(tenant);
@@ -19,8 +20,15 @@ export function TrialBanner() {
       <div className="flex items-center gap-3 border-b border-primary/25 bg-accent px-4 py-2 text-[13px] text-accent-foreground">
         <CreditCard className="size-4 shrink-0" />
         <span className="flex-1">
-          <strong>{days} day{days === 1 ? '' : 's'}</strong> left in your trial. On day 16 your card ending {tenant.cardLast4} is charged{' '}
-          <strong>{fmtAud(incGst)}</strong> ({fmtAud(base)} + GST) for the base plan. Cancel any time before then and nothing is charged.
+          {freeMode ? (
+            <>This environment is <strong>free while we test</strong> — nothing is charged, with or without a card on file. Your trial converts to an active plan on day {trialDays + 1} at $0.</>
+          ) : (
+            <>
+              <strong>{days} day{days === 1 ? '' : 's'}</strong> left in your trial. On day {trialDays + 1}{' '}
+              {tenant.cardLast4 ? <>your card ending {tenant.cardLast4} is charged</> : <>we will charge your payment method</>}{' '}
+              <strong>{fmtAud(incGst)}</strong> ({fmtAud(base)} + GST) for the base plan. Cancel any time before then and nothing is charged.
+            </>
+          )}
         </span>
         <Link to="/hq/modules" className="font-medium underline-offset-2 hover:underline">Manage plan</Link>
       </div>

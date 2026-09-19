@@ -80,6 +80,7 @@ class BillingSummary(BaseModel):
     next_charge_estimate_cents: int
     card_on_file: bool
     card_last4: str | None
+    free_mode: bool = False        # $0 base plan: nothing is charged in this environment
     billing_mode: str
     lines: list[BillingLine]
     recent: list[BillingEventOut]

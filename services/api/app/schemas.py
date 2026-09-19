@@ -21,7 +21,7 @@ class SignUpIn(BaseModel):
     full_name: str = Field(min_length=2, max_length=200)
     email: EmailStr
     password: str = Field(max_length=200)  # length/complexity enforced by security.password_problems → structured 422
-    payment_method: PaymentMethodIn
+    payment_method: PaymentMethodIn | None = None   # optional while REQUIRE_CARD_AT_SIGNUP is off
 
     @field_validator("email")
     @classmethod
@@ -116,6 +116,8 @@ class PricingOut(BaseModel):
     base_plan_inc_gst_cents: int
     currency: str = "AUD"
     trial_days: int
+    require_card: bool = True        # false while testing: the signup card step can be skipped
+    free_mode: bool = False          # true when the base plan is $0, so the trial converts without a charge
 
 
 class SessionOut(BaseModel):

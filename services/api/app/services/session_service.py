@@ -43,8 +43,16 @@ def build_session(db: Session, user: User, tenant: Tenant, membership: Membershi
         entitlements=ent,
         read_only=entitlements.tenant_is_read_only(tenant),
         pricing=schemas.PricingOut(base_plan_cents=base, gst_rate_bps=settings.GST_RATE_BPS,
-                                   base_plan_inc_gst_cents=round(base * (10_000 + settings.GST_RATE_BPS) / 10_000), trial_days=settings.TRIAL_DAYS),
+                                   base_plan_inc_gst_cents=round(base * (10_000 + settings.GST_RATE_BPS) / 10_000), trial_days=settings.TRIAL_DAYS, require_card=settings.REQUIRE_CARD_AT_SIGNUP, free_mode=settings.free_mode),
     )
+
+
+def pricing_out() -> schemas.PricingOut:
+    """The plan as this server is configured — read by the signup page before any session exists."""
+    base = settings.BASE_PLAN_PRICE_CENTS
+    return schemas.PricingOut(base_plan_cents=base, gst_rate_bps=settings.GST_RATE_BPS,
+                              base_plan_inc_gst_cents=round(base * (10_000 + settings.GST_RATE_BPS) / 10_000),
+                              trial_days=settings.TRIAL_DAYS, require_card=settings.REQUIRE_CARD_AT_SIGNUP, free_mode=settings.free_mode)
 
 
 def tenant_choices(db: Session, user: User) -> list[schemas.TenantChoice]:
