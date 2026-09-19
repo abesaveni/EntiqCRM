@@ -14,6 +14,8 @@ from slowapi.middleware import SlowAPIMiddleware
 from app.core.config import enforce_production_safety, settings
 from app.core.limiter import limiter
 from app.core.tenancy import TenantContextMissing, TenantIsolationError, set_tenant
+from app.modules.sign import router as sign_router
+from app.modules.verify import router as verify_router
 from app.routers import audit_router, auth, billing, crm, dev, documents, health, me, notifications, subscriptions, users
 from app.services import notify_service
 
@@ -73,5 +75,9 @@ app.include_router(crm.router, prefix=API_PREFIX)
 app.include_router(notifications.router, prefix=API_PREFIX)
 app.include_router(documents.router, prefix=API_PREFIX)
 app.include_router(billing.router, prefix=API_PREFIX)
+# Modules
+app.include_router(verify_router.router, prefix=API_PREFIX)
+app.include_router(sign_router.router, prefix=API_PREFIX)
+app.include_router(sign_router.public, prefix=API_PREFIX)
 if not settings.is_production:
     app.include_router(dev.router, prefix=API_PREFIX)

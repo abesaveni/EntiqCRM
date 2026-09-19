@@ -166,7 +166,7 @@
     "shortName": "Verify",
     "icon": "Fingerprint",
     "outcome": "Complete identity, entity, beneficial ownership and AML/CTF compliance in one controlled module.",
-    "status": "porting",
+    "status": "built",
     "pricing": {
       "model": "metered",
       "unit": "per verification",
@@ -201,14 +201,6 @@
       {
         "label": "Screening",
         "path": "/verify/screening"
-      },
-      {
-        "label": "Cases",
-        "path": "/verify/cases"
-      },
-      {
-        "label": "AUSTRAC",
-        "path": "/verify/austrac"
       }
     ],
     "panels": [
@@ -229,7 +221,7 @@
     "shortName": "Sign",
     "icon": "PenLine",
     "outcome": "Prepare, approve, sign, seal and independently verify agreements and declarations.",
-    "status": "porting",
+    "status": "built",
     "pricing": {
       "model": "metered",
       "unit": "per envelope",
@@ -257,14 +249,6 @@
       {
         "label": "Agreements",
         "path": "/sign"
-      },
-      {
-        "label": "Templates",
-        "path": "/sign/templates"
-      },
-      {
-        "label": "Evidence",
-        "path": "/sign/evidence"
       }
     ],
     "panels": [

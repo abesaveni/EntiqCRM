@@ -77,6 +77,22 @@ def cancelled(*, name: str, practice: str, export_days: int, app_url: str) -> tu
     return subject, text, html
 
 
+def sign_request(*, name: str, practice: str, title: str, message: str | None, url: str, expires: str | None, reminder: bool = False) -> tuple[str, str, str]:
+    subject = f"{'Reminder: ' if reminder else ''}{practice} has sent you {title} to sign"
+    note = f"\n\nMessage from {practice}:\n{message}" if message else ""
+    exp = f" The link expires on {expires}." if expires else ""
+    text = f"Hi {name},\n\n{practice} has sent you \"{title}\" to review and sign electronically.{note}\n\nReview and sign:\n{url}\n{exp}\n\nIf you did not expect this, you can ignore it or decline from the link."
+    html = _wrap(f"{title}", [f"Hi {escape(name)},", f"<strong>{escape(practice)}</strong> has sent you <strong>{escape(title)}</strong> to review and sign electronically.", *([f"<em>{escape(message)}</em>"] if message else []), f"Nothing to install — open the link, read the document, and sign with your name or a drawn signature.{escape(exp)}"], ("Review and sign", url), "If you did not expect this, you can ignore it or decline from the link.")
+    return subject, text, html
+
+
+def sign_completed(*, name: str, title: str, practice: str, sealed: str) -> tuple[str, str, str]:
+    subject = f"Signed: {title}"
+    text = f"Hi {name},\n\nAll parties have signed \"{title}\" with {practice}. The agreement is sealed.\n\nSeal (SHA-256): {sealed}\n\nKeep this email with your copy of the document; the seal lets anyone confirm it has not changed since signing.\n\nEnTIQ Sign"
+    html = _wrap(subject, [f"Hi {escape(name)},", f"All parties have signed <strong>{escape(title)}</strong> with {escape(practice)}. The agreement is sealed.", f"<span style=\"font:12px monospace\">Seal: {escape(sealed)}</span>"], None, "Keep this with your copy of the document; the seal lets anyone confirm it has not changed since signing.")
+    return subject, text, html
+
+
 def task_assigned(*, name: str, title: str, client_name: str | None, assigned_by: str, app_url: str) -> tuple[str, str, str]:
     subject = f"Task for you: {title}"
     where = f" for {client_name}" if client_name else ""

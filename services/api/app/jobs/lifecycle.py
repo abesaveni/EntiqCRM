@@ -22,7 +22,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core import audit, mailer
+from app.core import audit, events, mailer
 from app.core.config import settings
 from app.core.security import utcnow
 from app.core.tenancy import platform_scope
@@ -127,8 +127,27 @@ def run(db: Session, now: datetime | None = None) -> dict:
 
         db.flush()
         delivered = mailer.deliver_pending(db)
+    stats["agreements_expired"] = expire_agreements(db, now)
     stats["delivery"] = delivered
     return stats
+
+
+def expire_agreements(db: Session, now: datetime) -> int:
+    """Sign: agreements still awaiting signature past their expiry become `expired` (links already refuse). Records are kept."""
+    from app.modules.sign.models import Agreement
+    from app.modules.sign.service import record_event
+    n = 0
+    with platform_scope():
+        rows = db.execute(select(Agreement).where(Agreement.status.in_(["sent", "partially_signed"]), Agreement.expires_at.is_not(None), Agreement.expires_at < now)).scalars().all()
+        for a in rows:
+            a.status = "expired"
+            for s in a.signers:
+                s.token_hash = None
+            record_event(db, a, "expired", detail={"expires_at": a.expires_at.isoformat()})
+            events.emit(db, tenant_id=a.tenant_id, client_id=a.client_id, module_key="sign", kind="agreement.expired", summary=f"Expired unsigned: {a.title}", actor_label="EnTIQ Sign", ref_type="agreement", ref_id=a.id)
+            n += 1
+        db.commit()
+    return n
 
 
 if __name__ == "__main__":

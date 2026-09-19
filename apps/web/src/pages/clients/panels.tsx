@@ -1,5 +1,11 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Plus } from 'lucide-react';
+import { Button } from '@entiq/ui/button';
+import { verify, IDENTITY_LABEL, SCREENING_LABEL, type ClientVerifyOut } from '@/api/verify';
+import { sign, STATUS_LABEL, agreementTone, type AgreementOut } from '@/api/sign';
+import { NewAgreementDialog } from '@/pages/sign/NewAgreementDialog';
+import { useSession } from '@/state/session';
 import type { ModuleManifest } from '@entiq/modules';
 import type { ClientOut } from '@/api/crm';
 import { StatusPill, riskTone } from '@/components/StatusPill';
@@ -16,7 +22,7 @@ export function ModulePanel({ module, client }: { module: ModuleManifest; client
     <div className="flex h-full flex-col rounded-[6px] border bg-card p-4">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2 text-[13px] font-semibold"><ModuleIcon name={module.icon} className="size-4 text-primary" />{module.panels[0]?.title ?? module.shortName}</div>
-        <Link to={module.nav[0]?.path ?? `/m/${module.key}`} className="flex items-center gap-0.5 text-[12px] text-muted-foreground hover:text-foreground">Open <ArrowRight className="size-3" /></Link>
+        <Link to={module.key === 'verify' ? `/verify/clients/${client.id}` : module.nav[0]?.path ?? `/m/${module.key}`} className="flex items-center gap-0.5 text-[12px] text-muted-foreground hover:text-foreground">Open <ArrowRight className="size-3" /></Link>
       </div>
       <div className="flex-1 text-[13px]">{body(module, client)}</div>
     </div>
@@ -32,22 +38,9 @@ const Pending = ({ what }: { what: string }) => <p className="text-muted-foregro
 function body(m: ModuleManifest, c: ClientOut) {
   const active = c.stage === 'Active' || c.stage === 'Review';
   switch (m.key) {
-    case 'verify':
-      return c.risk_rating ? (
-        <>
-          <Row k="Risk rating" v={<StatusPill tone={riskTone(c.risk_rating)}>{c.risk_rating}</StatusPill>} />
-          <Row k="Assessed" v={fmtDate(c.risk_assessed_at)} />
-          <Row k="Next re-screen" v={c.risk_assessed_at ? fmtDate(new Date(new Date(c.risk_assessed_at).getTime() + 365 * 86_400_000).toISOString()) : '—'} />
-        </>
-      ) : (
-        <>
-          <Row k="Risk rating" v={<span className="text-warn">Not assessed</span>} />
-          <Row k="Identity" v="Not verified" />
-          <p className="mt-2 text-muted-foreground">Run a verification to rate this {c.client_type.toLowerCase()} and screen its people.</p>
-        </>
-      );
+    case 'verify': return <VerifyPanel client={c} />;
+    case 'sign': return <SignPanel client={c} />;
     case 'workpapers': return active ? <><Row k="Ledger" v="Not linked" /><Row k="Open workpapers" v="0" /><Row k="Xero" v="Connect in Practice HQ" /></> : <Pending what="Ledger and workpapers" />;
-    case 'sign': return <><Row k="Agreements" v="0" /><Row k="Awaiting signature" v="0" /><p className="mt-2 text-muted-foreground">Send an engagement letter or declaration for signature.</p></>;
     case 'start': return c.stage === 'Onboarding' ? <><Row k="Lifecycle" v="In progress" /><Row k="Gates" v="KYC · AML · Sign · Mandate" /></> : c.stage === 'Lead' || c.stage === 'Proposal' ? <p className="text-muted-foreground">Not started — send an invitation to begin the 11-stage onboarding.</p> : <p className="text-muted-foreground">Onboarding complete.</p>;
     case 'practice': return <><Row k="Open jobs" v="0" /><Row k="Open tasks" v={c.open_task_count} /><Row k="Owner" v={c.owner_name ?? 'Unassigned'} /></>;
     case 'advisory': return active ? <><Row k="Cash position" v="—" /><Row k="Next meeting" v="Not scheduled" /></> : <Pending what="Cash position and forecasts" />;
@@ -58,4 +51,47 @@ function body(m: ModuleManifest, c: ClientOut) {
     case 'lending': return <p className="text-muted-foreground">No finance applications for this client.</p>;
     default: return <p className="text-muted-foreground">{m.outcome}</p>;
   }
+}
+
+/** Live Verify panel: reads the module's own view of this client (parties, entity, rating). */
+function VerifyPanel({ client: c }: { client: ClientOut }) {
+  const [d, setD] = useState<ClientVerifyOut | null>(null);
+  useEffect(() => { void verify.client(c.id).then(setD).catch(() => setD(null)); }, [c.id, c.risk_rating, c.risk_assessed_at]);
+  if (!d) return <p className="text-muted-foreground">Loading checks…</p>;
+  const verified = d.parties.filter((p) => p.identity_status === 'verified').length;
+  const hits = d.screenings.filter((s) => s.status === 'potential_match').length + (d.entity_screening?.status === 'potential_match' ? 1 : 0);
+  return (
+    <>
+      <Row k="Risk rating" v={d.risk ? <StatusPill tone={riskTone(d.risk.rating)}>{d.risk.rating}</StatusPill> : <span className="text-warn">Not assessed</span>} />
+      <Row k="Parties verified" v={`${verified} of ${d.parties.length}`} />
+      <Row k="Entity screening" v={SCREENING_LABEL[d.entity_screening?.status ?? 'none']} />
+      {hits > 0 && <Row k="Hits to review" v={<span className="text-warn">{hits}</span>} />}
+      {d.risk && <Row k="Next review" v={fmtDate(d.risk.next_review_at)} />}
+      {d.parties.some((p) => p.identity_status !== 'verified') && <p className="mt-2 text-[12px] text-muted-foreground">{d.parties.filter((p) => p.identity_status !== 'verified').slice(0, 2).map((p) => `${p.name}: ${IDENTITY_LABEL[p.identity_status].toLowerCase()}`).join(' · ')}</p>}
+      <Link to={`/verify/clients/${c.id}`} className="mt-3 inline-block text-[12px] text-primary hover:underline">Run checks →</Link>
+    </>
+  );
+}
+
+/** Live Sign panel: this client's agreements, and a shortcut to send one. */
+function SignPanel({ client: c }: { client: ClientOut }) {
+  const readOnly = useSession((s) => s.readOnly);
+  const can = useSession((s) => s.can);
+  const [rows, setRows] = useState<AgreementOut[] | null>(null);
+  const [open, setOpen] = useState(false);
+  const load = () => sign.agreements.list({ client_id: c.id }).then(setRows).catch(() => setRows([]));
+  useEffect(() => { void load(); }, [c.id]);
+  if (!rows) return <p className="text-muted-foreground">Loading agreements…</p>;
+  const awaiting = rows.filter((a) => a.status === 'sent' || a.status === 'partially_signed');
+  return (
+    <>
+      <Row k="Agreements" v={rows.length} />
+      <Row k="Awaiting signature" v={awaiting.length ? <span className="text-warn">{awaiting.length}</span> : 0} />
+      <ul className="mt-2 space-y-1">
+        {rows.slice(0, 3).map((a) => <li key={a.id} className="flex items-center justify-between gap-2 text-[12px]"><Link to={`/sign/agreements/${a.id}`} className="truncate hover:underline">{a.title}</Link><StatusPill tone={agreementTone(a.status)}>{STATUS_LABEL[a.status]}</StatusPill></li>)}
+      </ul>
+      {!readOnly && can('sign:send') && <Button size="sm" variant="outline" className="mt-3" onClick={() => setOpen(true)}><Plus className="mr-1 size-3.5" /> Send for signature</Button>}
+      <NewAgreementDialog open={open} onOpenChange={setOpen} onDone={async () => { await load(); }} presetClient={c} />
+    </>
+  );
 }

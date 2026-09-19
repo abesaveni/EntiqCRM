@@ -84,6 +84,20 @@ class Settings(BaseSettings):
     EMAIL_DELIVERY_ENABLED: bool = False
     OPENAI_API_KEY: str = ""
 
+    # Verify providers (live when set; simulation drivers otherwise)
+    # Verify providers: "auto" uses live drivers when keys are present, "simulate" forces the simulation drivers (tests, demos).
+    VERIFY_PROVIDER_MODE: str = "auto"
+    DIDIT_API_KEY: str = ""
+    DIDIT_BASE_URL: str = "https://verification.didit.me"
+    DIDIT_WEBHOOK_SECRET: str = ""
+    DIDIT_WORKFLOW_INDIVIDUAL: str = ""
+    DIDIT_WORKFLOW_KYB: str = ""
+    OPENSANCTIONS_API_KEY: str = ""
+    OPENSANCTIONS_BASE_URL: str = "https://api.opensanctions.org"
+    OPENSANCTIONS_DATASET: str = "default"
+    OPENSANCTIONS_THRESHOLD: str = "0.7"
+    OPENSANCTIONS_TIMEOUT: str = "20"
+
     RATE_LIMIT_DEFAULT: str = "300/minute"
     RATE_LIMIT_AUTH: str = "20/minute"
 
@@ -138,6 +152,10 @@ def verify_production_safety() -> list[str]:
             problems.append("APP_PUBLIC_URL is not https")
         if not settings.CLAMAV_HOST:
             problems.append("CLAMAV_HOST is not set — anti-virus scanning is required for uploads in production")
+        if settings.VERIFY_PROVIDER_MODE == "simulate":
+            problems.append("VERIFY_PROVIDER_MODE is 'simulate' — production must use live identity/screening providers")
+        if settings.DIDIT_API_KEY and not settings.DIDIT_WEBHOOK_SECRET:
+            problems.append("DIDIT_WEBHOOK_SECRET is unset while DIDIT_API_KEY is set — the Verify webhook would accept unsigned callbacks")
         if settings.BILLING_MODE == "simulate":
             problems.append("BILLING_MODE is 'simulate' — production must charge through Stripe")
     return problems

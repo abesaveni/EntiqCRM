@@ -12,6 +12,8 @@ os.environ["SMTP_HOST"] = ""
 os.environ["SMTP_USERNAME"] = ""
 os.environ["EMAIL_DELIVERY_ENABLED"] = "false"
 os.environ["CLAMAV_HOST"] = ""
+os.environ["VERIFY_PROVIDER_MODE"] = "simulate"   # never touch Didit/OpenSanctions from tests, even with keys in .env.local
+os.environ["DIDIT_WEBHOOK_SECRET"] = ""
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
