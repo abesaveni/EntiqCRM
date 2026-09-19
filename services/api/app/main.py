@@ -14,7 +14,10 @@ from slowapi.middleware import SlowAPIMiddleware
 from app.core.config import enforce_production_safety, settings
 from app.core.limiter import limiter
 from app.core.tenancy import TenantContextMissing, TenantIsolationError, set_tenant
+from app.modules.practice import router as practice_router
+from app.modules.practice import service as practice_service
 from app.modules.sign import router as sign_router
+from app.modules.start import router as start_router
 from app.modules.verify import router as verify_router
 from app.routers import audit_router, auth, billing, crm, dev, documents, health, me, notifications, subscriptions, users
 from app.services import notify_service
@@ -29,6 +32,7 @@ API_PREFIX = "/api/v1"
 async def lifespan(app: FastAPI):
     enforce_production_safety()
     notify_service.register()  # event subscribers: task assigned, stage changed, import completed
+    practice_service.register()  # Start → Practice: schedule work when a client is activated
     from app.modules import registry
     log.info("EnTIQ API starting · env=%s · modules=%d · db=%s", settings.ENV, len(registry.all_modules()), settings.DATABASE_URL.split("://", 1)[0])
     yield
@@ -79,5 +83,8 @@ app.include_router(billing.router, prefix=API_PREFIX)
 app.include_router(verify_router.router, prefix=API_PREFIX)
 app.include_router(sign_router.router, prefix=API_PREFIX)
 app.include_router(sign_router.public, prefix=API_PREFIX)
+app.include_router(start_router.router, prefix=API_PREFIX)
+app.include_router(start_router.public, prefix=API_PREFIX)
+app.include_router(practice_router.router, prefix=API_PREFIX)
 if not settings.is_production:
     app.include_router(dev.router, prefix=API_PREFIX)

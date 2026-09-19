@@ -109,7 +109,7 @@
     "shortName": "Start",
     "icon": "Rocket",
     "outcome": "Move a prospect from service selection to an accepted, verified and activated client.",
-    "status": "porting",
+    "status": "built",
     "pricing": {
       "model": "per_client",
       "unit": "per activated client",
@@ -136,12 +136,8 @@
     ],
     "nav": [
       {
-        "label": "Onboarding cases",
+        "label": "Onboardings",
         "path": "/start"
-      },
-      {
-        "label": "Invitations",
-        "path": "/start/invitations"
       },
       {
         "label": "Service catalogue",
@@ -428,7 +424,7 @@
     "shortName": "Practice",
     "icon": "Briefcase",
     "outcome": "Run clients, jobs, teams, deadlines and service delivery from one practice operating system.",
-    "status": "porting",
+    "status": "built",
     "pricing": {
       "model": "per_seat",
       "unit": "per staff seat",

@@ -24,6 +24,13 @@ import { ClientVerify } from './pages/verify/ClientVerify';
 import { Agreements } from './pages/sign/Agreements';
 import { AgreementDetail } from './pages/sign/AgreementDetail';
 import { PublicSign } from './pages/sign/PublicSign';
+import { StartHome } from './pages/start/StartHome';
+import { OnboardingDetail } from './pages/start/OnboardingDetail';
+import { OnboardPublic } from './pages/start/OnboardPublic';
+import { ServiceCatalogue } from './pages/start/ServiceCatalogue';
+import { PracticeHome } from './pages/practice/PracticeHome';
+import { JobDetail } from './pages/practice/JobDetail';
+import { Deadlines, Team } from './pages/practice/DeadlinesTeam';
 
 export const router = createBrowserRouter([
   { path: '/signup', element: <SignUp /> },
@@ -31,6 +38,7 @@ export const router = createBrowserRouter([
   { path: '/accept-invite', element: <AcceptInvite /> },
   { path: '/account-closed', element: <AccountClosed /> },
   { path: '/s/:token', element: <PublicSign /> },          // signer surface: emailed token, no login
+  { path: '/onboard/:token', element: <OnboardPublic /> },  // prospect surface: magic link, no login
   {
     path: '/',
     element: <AppShell />,
@@ -62,6 +70,17 @@ export const router = createBrowserRouter([
       // Sign — module 05
       { path: 'sign', element: <Agreements /> },
       { path: 'sign/agreements/:id', element: <AgreementDetail /> },
+
+      // Start — module 03
+      { path: 'start', element: <StartHome /> },
+      { path: 'start/services', element: <ServiceCatalogue /> },
+      { path: 'start/onboardings/:id', element: <OnboardingDetail /> },
+
+      // Practice — module 09
+      { path: 'practice', element: <PracticeHome /> },
+      { path: 'practice/jobs/:id', element: <JobDetail /> },
+      { path: 'practice/deadlines', element: <Deadlines /> },
+      { path: 'practice/team', element: <Team /> },
 
       // Any other module: entitlement check → placeholder while porting
       { path: 'm/:key', element: <ModuleRoute /> },

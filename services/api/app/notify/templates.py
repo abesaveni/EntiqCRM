@@ -99,3 +99,26 @@ def task_assigned(*, name: str, title: str, client_name: str | None, assigned_by
     text = f"Hi {name},\n\n{assigned_by} assigned you a task{where}:\n\n  {title}\n\nOpen tasks: {app_url}/tasks\n\nThe EnTIQ team"
     html = _wrap(subject, [f"Hi {escape(name)},", f"<strong>{escape(assigned_by)}</strong> assigned you a task{escape(where)}:", f"<strong>{escape(title)}</strong>"], ("Open tasks", f"{app_url}/tasks"))
     return subject, text, html
+
+
+def start_invitation(*, name: str, practice: str, prospect: str, url: str, expires: str) -> tuple[str, str, str]:
+    subject = f"{practice} — let's get {prospect} set up"
+    text = (f"Hi {name},\n\n{practice} has invited you to complete onboarding for {prospect}. It takes about 15 minutes: confirm your entity details, "
+            f"answer a short questionnaire, upload a few documents and choose the services you need.\n\nStart here (link valid until {expires}):\n{url}\n\n"
+            f"You can stop and come back any time using the same link.\n\n{practice}")
+    html = _wrap(f"Let's get {prospect} set up", [f"Hi {escape(name)},", f"<strong>{escape(practice)}</strong> has invited you to complete onboarding for <strong>{escape(prospect)}</strong>. It takes about 15 minutes: confirm your entity details, answer a short questionnaire, upload a few documents and choose the services you need.", "You can stop and come back any time using the same link."], ("Start onboarding", url), f"The link is valid until {escape(expires)}.")
+    return subject, text, html
+
+
+def start_proposal(*, name: str, practice: str, total: str, url: str, valid_until: str) -> tuple[str, str, str]:
+    subject = f"Your proposal from {practice} is ready"
+    text = f"Hi {name},\n\n{practice} has issued your fee proposal: {total} inc GST. Open your onboarding link to review the line items and accept. The proposal is valid until {valid_until}.\n\n{practice}"
+    html = _wrap(subject, [f"Hi {escape(name)},", f"<strong>{escape(practice)}</strong> has issued your fee proposal: <strong>{escape(total)} inc GST</strong>.", "Open your onboarding link (from our earlier email) to review the line items and accept."], None, f"The proposal is valid until {escape(valid_until)}.")
+    return subject, text, html
+
+
+def start_activated(*, name: str, practice: str, prospect: str) -> tuple[str, str, str]:
+    subject = f"Welcome aboard — {prospect} is now a client of {practice}"
+    text = f"Hi {name},\n\nOnboarding is complete and {prospect} is now an active client of {practice}. Your engagement letter is signed and your services are scheduled. We'll be in touch with next steps.\n\n{practice}"
+    html = _wrap("Welcome aboard", [f"Hi {escape(name)},", f"Onboarding is complete and <strong>{escape(prospect)}</strong> is now an active client of <strong>{escape(practice)}</strong>.", "Your engagement letter is signed and your services are scheduled. We'll be in touch with next steps."])
+    return subject, text, html

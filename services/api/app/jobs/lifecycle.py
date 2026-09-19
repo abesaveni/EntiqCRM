@@ -128,6 +128,7 @@ def run(db: Session, now: datetime | None = None) -> dict:
         db.flush()
         delivered = mailer.deliver_pending(db)
     stats["agreements_expired"] = expire_agreements(db, now)
+    stats["recurring_jobs_created"] = generate_recurring_jobs(db, now)
     stats["delivery"] = delivered
     return stats
 
@@ -158,3 +159,20 @@ if __name__ == "__main__":
         session.commit()
     json.dump(result, sys.stdout, indent=2)
     print()
+
+
+def generate_recurring_jobs(db: Session, now: datetime) -> int:
+    """Practice: materialise recurring jobs whose due date is within their advance window, per tenant."""
+    from app.core.tenancy import tenant_scope
+    from app.models.tenant import Tenant
+    from app.modules.practice import service as practice_service
+    n = 0
+    with platform_scope():
+        tenants = db.execute(select(Tenant.id).join(TenantSubscription, TenantSubscription.tenant_id == Tenant.id).where(TenantSubscription.module_key == "practice", TenantSubscription.status.in_(["trialing", "active", "past_due"]))).scalars().all()
+    for tid in tenants:
+        with tenant_scope(tid):
+            db.info["tenant_id"] = tid
+            n += practice_service.generate_recurring(db, tid, now.date())
+        db.info.pop("tenant_id", None)
+    db.commit()
+    return n

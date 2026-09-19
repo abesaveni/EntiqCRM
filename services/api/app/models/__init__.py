@@ -4,7 +4,9 @@ from app.models.identity import Invitation, Membership, ModuleGrant, RefreshToke
 from app.models.platform import BillingEvent, Document, LifecycleNotice, Notification, OutboundMessage
 from app.models.subscription import TenantSubscription
 from app.models.tenant import Tenant
+from app.modules.practice.models import Job, RecurringJob, TimeEntry
 from app.modules.sign.models import Agreement, Signer, SignEvent
+from app.modules.start.models import Onboarding, OnboardingStage, ServiceOffering
 from app.modules.verify.models import RiskAssessment, Screening, Verification
 
 __all__ = [
@@ -15,5 +17,7 @@ __all__ = [
     "TenantSubscription",
     "Tenant",
     "Agreement", "Signer", "SignEvent",
+    "Job", "RecurringJob", "TimeEntry",
+    "Onboarding", "OnboardingStage", "ServiceOffering",
     "RiskAssessment", "Screening", "Verification",
 ]

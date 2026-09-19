@@ -5,6 +5,10 @@ import { Button } from '@entiq/ui/button';
 import { verify, IDENTITY_LABEL, SCREENING_LABEL, type ClientVerifyOut } from '@/api/verify';
 import { sign, STATUS_LABEL, agreementTone, type AgreementOut } from '@/api/sign';
 import { NewAgreementDialog } from '@/pages/sign/NewAgreementDialog';
+import { start as startApi, STATUS_LABEL as START_STATUS, onboardingTone, type OnboardingOut } from '@/api/start';
+import { NewOnboardingDialog } from '@/pages/start/StartHome';
+import { practice as practiceApi, JOB_STATUS_LABEL, jobTone, type JobOut } from '@/api/practice';
+import { NewJobDialog } from '@/pages/practice/PracticeHome';
 import { useSession } from '@/state/session';
 import type { ModuleManifest } from '@entiq/modules';
 import type { ClientOut } from '@/api/crm';
@@ -40,9 +44,9 @@ function body(m: ModuleManifest, c: ClientOut) {
   switch (m.key) {
     case 'verify': return <VerifyPanel client={c} />;
     case 'sign': return <SignPanel client={c} />;
+    case 'start': return <StartPanel client={c} />;
+    case 'practice': return <PracticePanel client={c} />;
     case 'workpapers': return active ? <><Row k="Ledger" v="Not linked" /><Row k="Open workpapers" v="0" /><Row k="Xero" v="Connect in Practice HQ" /></> : <Pending what="Ledger and workpapers" />;
-    case 'start': return c.stage === 'Onboarding' ? <><Row k="Lifecycle" v="In progress" /><Row k="Gates" v="KYC · AML · Sign · Mandate" /></> : c.stage === 'Lead' || c.stage === 'Proposal' ? <p className="text-muted-foreground">Not started — send an invitation to begin the 11-stage onboarding.</p> : <p className="text-muted-foreground">Onboarding complete.</p>;
-    case 'practice': return <><Row k="Open jobs" v="0" /><Row k="Open tasks" v={c.open_task_count} /><Row k="Owner" v={c.owner_name ?? 'Unassigned'} /></>;
     case 'advisory': return active ? <><Row k="Cash position" v="—" /><Row k="Next meeting" v="Not scheduled" /></> : <Pending what="Cash position and forecasts" />;
     case 'requests': return <><Row k="Open request packs" v="0" /><p className="mt-2 text-muted-foreground">Send an adaptive document checklist.</p></>;
     case 'documents': return <><Row k="Files on record" v={c.document_count} /><p className="mt-2 text-muted-foreground">Folders, OCR and storage tiers arrive with the Documents module; base attachments are always available on the record.</p></>;
@@ -92,6 +96,54 @@ function SignPanel({ client: c }: { client: ClientOut }) {
       </ul>
       {!readOnly && can('sign:send') && <Button size="sm" variant="outline" className="mt-3" onClick={() => setOpen(true)}><Plus className="mr-1 size-3.5" /> Send for signature</Button>}
       <NewAgreementDialog open={open} onOpenChange={setOpen} onDone={async () => { await load(); }} presetClient={c} />
+    </>
+  );
+}
+
+/** Live Start panel: this client's onboarding, or the way to begin one. */
+function StartPanel({ client: c }: { client: ClientOut }) {
+  const readOnly = useSession((s) => s.readOnly);
+  const can = useSession((s) => s.can);
+  const [rows, setRows] = useState<OnboardingOut[] | null>(null);
+  const [open, setOpen] = useState(false);
+  const load = () => startApi.onboardings.list({ open: false }).then((all) => setRows(all.filter((o) => o.client_id === c.id))).catch(() => setRows([]));
+  useEffect(() => { void load(); }, [c.id]);
+  if (!rows) return <p className="text-muted-foreground">Loading…</p>;
+  const cur = rows.find((o) => !['activated', 'withdrawn'].includes(o.status)) ?? rows[0];
+  if (!cur) return (
+    <>
+      <p className="text-muted-foreground">{c.stage === 'Active' ? 'Already an active client — no onboarding needed.' : 'Not started. Invite the primary contact to begin the 11-stage onboarding.'}</p>
+      {c.stage !== 'Active' && !readOnly && can('start:invite') && <Button size="sm" variant="outline" className="mt-3" onClick={() => setOpen(true)}><Plus className="mr-1 size-3.5" /> Start onboarding</Button>}
+      <NewOnboardingDialog open={open} onOpenChange={setOpen} onDone={async () => { await load(); }} presetClient={c} />
+    </>
+  );
+  return (
+    <>
+      <Row k="Status" v={<StatusPill tone={onboardingTone(cur.status)}>{START_STATUS[cur.status]}</StatusPill>} />
+      <Row k="Stage" v={`${cur.current_stage} of 11 · ${cur.progress_pct}%`} />
+      {cur.proposal_total_cents != null && <Row k="Proposal" v={`$${(cur.proposal_total_cents / 100).toLocaleString('en-AU')} inc GST`} />}
+      <Link to={`/start/onboardings/${cur.id}`} className="mt-3 inline-block text-[12px] text-primary hover:underline">Open onboarding →</Link>
+    </>
+  );
+}
+
+/** Live Practice panel: open jobs for this client and a shortcut to raise one. */
+function PracticePanel({ client: c }: { client: ClientOut }) {
+  const readOnly = useSession((s) => s.readOnly);
+  const can = useSession((s) => s.can);
+  const [rows, setRows] = useState<JobOut[] | null>(null);
+  const [open, setOpen] = useState(false);
+  const load = () => practiceApi.jobs.list({ client_id: c.id }).then(setRows).catch(() => setRows([]));
+  useEffect(() => { void load(); }, [c.id]);
+  if (!rows) return <p className="text-muted-foreground">Loading…</p>;
+  const openJobs = rows.filter((j) => !['complete', 'cancelled'].includes(j.status));
+  return (
+    <>
+      <Row k="Open jobs" v={openJobs.length} />
+      <Row k="Overdue" v={openJobs.filter((j) => j.overdue).length ? <span className="text-error">{openJobs.filter((j) => j.overdue).length}</span> : 0} />
+      <ul className="mt-2 space-y-1">{openJobs.slice(0, 3).map((j) => <li key={j.id} className="flex items-center justify-between gap-2 text-[12px]"><Link to={`/practice/jobs/${j.id}`} className="truncate hover:underline">{j.title}</Link><StatusPill tone={jobTone(j.status)}>{JOB_STATUS_LABEL[j.status]}</StatusPill></li>)}</ul>
+      {!readOnly && can('practice:jobs') && <Button size="sm" variant="outline" className="mt-3" onClick={() => setOpen(true)}><Plus className="mr-1 size-3.5" /> New job</Button>}
+      <NewJobDialog open={open} onOpenChange={setOpen} onDone={async () => { await load(); }} meta={null} presetClient={c} />
     </>
   );
 }
