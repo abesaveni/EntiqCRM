@@ -131,6 +131,8 @@ def run(db: Session, now: datetime | None = None) -> dict:
     stats["recurring_jobs_created"] = generate_recurring_jobs(db, now)
     from app.modules.requests import service as requests_service
     stats["request_reminders"] = requests_service.remind_overdue(db, now)
+    from app.modules.practice_billing import service as practice_billing_service
+    stats["invoice_reminders"] = practice_billing_service.chase_overdue(db, now)
     db.commit()
     stats["delivery"] = delivered
     return stats

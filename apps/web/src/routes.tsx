@@ -47,6 +47,9 @@ import { AcademyHome } from './pages/academy/AcademyHome';
 import { CoursePlayer, MyLearningPage } from './pages/academy/CoursePlayer';
 import { LendingHome } from './pages/lending/LendingHome';
 import { ApplicationDetail } from './pages/lending/ApplicationDetail';
+import { DocumentsHome } from './pages/documents/DocumentsHome';
+import { PracticeBillingHome } from './pages/billing/PracticeBillingHome';
+import { InvoiceDetail } from './pages/billing/InvoiceDetail';
 
 export const router = createBrowserRouter([
   { path: '/signup', element: <SignUp /> },
@@ -134,6 +137,13 @@ export const router = createBrowserRouter([
       // Lending — module 20
       { path: 'lending', element: <LendingHome /> },
       { path: 'lending/:id', element: <ApplicationDetail /> },
+
+      // Documents — module 07
+      { path: 'documents', element: <DocumentsHome /> },
+
+      // Billing — module 19 (the practice invoicing its clients)
+      { path: 'billing', element: <PracticeBillingHome /> },
+      { path: 'billing/invoices/:id', element: <InvoiceDetail /> },
 
       // Any other module: entitlement check → placeholder while porting
       { path: 'm/:key', element: <ModuleRoute /> },

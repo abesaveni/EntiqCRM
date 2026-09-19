@@ -12,7 +12,9 @@ from typing import Any
 from app.core.config import settings
 
 BASE_BUNDLE: tuple[str, ...] = ("hq", "crm")
-PLATFORM_SERVICES: tuple[str, ...] = ("billing",)
+# Reserved for services the platform provisions itself. EnTIQ's own subscription billing is the
+# spine (Practice HQ + billing_service), not a module, so nothing sits here today.
+PLATFORM_SERVICES: tuple[str, ...] = ()
 
 
 @lru_cache(maxsize=1)

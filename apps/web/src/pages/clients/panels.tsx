@@ -15,6 +15,9 @@ import { advisory as advApi, healthTone, type ClientAdvisory as AdvView } from '
 import { lending as lendApi, STAGE_LABEL as LEND_STAGE, stageTone as lendTone, type ApplicationOut } from '@/api/lending';
 import { NewApplicationDialog } from '@/pages/lending/LendingHome';
 import { fmtCents } from '@/api/platform';
+import { practiceBilling, INVOICE_STATUS_LABEL, invoiceTone, type ClientStatement } from '@/api/practiceBilling';
+import { NewInvoiceDialog } from '@/pages/billing/PracticeBillingHome';
+import { documentsModule, type DocsOverview } from '@/api/documentsModule';
 import { requests as requestsApi, PACK_STATUS_LABEL, packTone, type PackOut } from '@/api/requests';
 import { NewRequestDialog } from '@/pages/requests/RequestsHome';
 import { clientPortalStaff, type PortalContactOut } from '@/api/portal';
@@ -62,9 +65,9 @@ function body(m: ModuleManifest, c: ClientOut) {
     case 'workpapers': return <WorkpapersPanel client={c} />;
     case 'advisory': return <AdvisoryPanel client={c} />;
     case 'lending': return <LendingPanel client={c} />;
+    case 'billing': return <BillingPanel client={c} />;
+    case 'documents': return <DocumentsPanel client={c} />;
     case 'client': return <ClientPortalPanel client={c} />;
-    case 'documents': return <><Row k="Files on record" v={c.document_count} /><p className="mt-2 text-muted-foreground">Folders, OCR and storage tiers arrive with the Documents module; base attachments are always available on the record.</p></>;
-    case 'billing': return <><Row k="Outstanding" v="$0.00" /><Row k="Last invoice" v="—" /></>;
     default: return <p className="text-muted-foreground">{m.outcome}</p>;
   }
 }
@@ -268,6 +271,48 @@ function LendingPanel({ client: c }: { client: ClientOut }) {
       {rows.length === 0 && <p className="mt-1 text-muted-foreground">No finance applications for this client.</p>}
       {!readOnly && can('lending:intake') && <Button size="sm" variant="outline" className="mt-3" onClick={() => setOpen(true)}><Plus className="mr-1 size-3.5" /> New application</Button>}
       <NewApplicationDialog open={open} onOpenChange={setOpen} onDone={async () => { await load(); }} presetClient={c} />
+    </>
+  );
+}
+
+/** Live Billing panel: what this client owes. */
+function BillingPanel({ client: c }: { client: ClientOut }) {
+  const readOnly = useSession((s) => s.readOnly);
+  const can = useSession((s) => s.can);
+  const [st, setSt] = useState<ClientStatement | null>(null);
+  const [open, setOpen] = useState(false);
+  const load = () => practiceBilling.statement(c.id).then(setSt).catch(() => setSt(null));
+  useEffect(() => { void load(); }, [c.id]);
+  if (!st) return <p className="text-muted-foreground">Loading…</p>;
+  const unpaid = st.invoices.filter((i) => i.balance_cents > 0);
+  return (
+    <>
+      <Row k="Outstanding" v={fmtCents(st.outstanding_cents)} />
+      <Row k="Overdue" v={st.overdue_cents ? <span className="text-error">{fmtCents(st.overdue_cents)}</span> : fmtCents(0)} />
+      <Row k="Recurring fees" v={st.schedules.filter((s) => s.is_active).length} />
+      <ul className="mt-2 space-y-1">{unpaid.slice(0, 3).map((i) => <li key={i.invoice_id} className="flex items-center justify-between gap-2 text-[12px]"><Link to={`/billing/invoices/${i.invoice_id}`} className="truncate hover:underline">{i.number} · {fmtCents(i.balance_cents)}</Link><StatusPill tone={invoiceTone(i.status)}>{INVOICE_STATUS_LABEL[i.status]}</StatusPill></li>)}</ul>
+      {!readOnly && can('billing:invoice') && <Button size="sm" variant="outline" className="mt-3" onClick={() => setOpen(true)}><Plus className="mr-1 size-3.5" /> New invoice</Button>}
+      <NewInvoiceDialog open={open} onOpenChange={setOpen} onDone={async () => { await load(); }} presetClient={c} />
+    </>
+  );
+}
+
+/** Live Documents panel: how this client's file is organised. */
+function DocumentsPanel({ client: c }: { client: ClientOut }) {
+  const [rows, setRows] = useState<{ total: number; unfiled: number; onHold: number; shared: number } | null>(null);
+  useEffect(() => {
+    void documentsModule.search({ client_id: c.id, limit: 500 }).then((docs) => setRows({
+      total: docs.length, unfiled: docs.filter((d) => !d.folder_id).length, onHold: docs.filter((d) => d.retention_hold).length, shared: docs.filter((d) => d.visible_to_client).length,
+    })).catch(() => setRows(null));
+  }, [c.id, c.document_count]);
+  if (!rows) return <p className="text-muted-foreground">Loading…</p>;
+  return (
+    <>
+      <Row k="Files on record" v={rows.total} />
+      <Row k="Unfiled" v={rows.unfiled ? <span className="text-warn">{rows.unfiled}</span> : 0} />
+      <Row k="On retention hold" v={rows.onHold} />
+      <Row k="Shared with the client" v={rows.shared} />
+      <Link to="/documents" className="mt-3 inline-block text-[12px] text-primary hover:underline">Open the library →</Link>
     </>
   );
 }

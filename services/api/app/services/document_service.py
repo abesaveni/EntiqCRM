@@ -45,4 +45,23 @@ def store(db: Session, *, tenant_id: uuid.UUID, data: bytes, filename: str, cont
     if client_id:
         events.emit(db, tenant_id=tenant_id, client_id=client_id, module_key=module_key, kind="document.uploaded", summary=f"Uploaded {d.filename} ({kind})",
                     detail={"size_bytes": d.size_bytes, "scan": scan_status}, actor_membership_id=uploaded_by_membership_id, actor_label=actor_label, ref_type="document", ref_id=d.id)
+    _index_if_subscribed(db, tenant_id, d)
     return d
+
+
+def _index_if_subscribed(db: Session, tenant_id, d: Document) -> None:
+    """When the practice holds the Documents module, make the file searchable and give it a retention date."""
+    from app.core import entitlements
+    from app.models.tenant import Tenant
+    t = db.get(Tenant, tenant_id)
+    if t is None:
+        return
+    try:
+        entitlements.check(db, t, "documents")
+    except entitlements.NotEntitled:
+        return
+    from app.modules.documents import service as documents_service
+    try:
+        documents_service.index_document(db, t, d)
+    except Exception:  # noqa: BLE001 — indexing must never fail an upload
+        pass

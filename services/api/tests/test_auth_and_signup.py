@@ -8,7 +8,7 @@ def test_signup_creates_trialing_tenant_with_base_bundle(client):
     assert s["tenant"]["card_on_file"] is True and s["tenant"]["card_last4"] == "4242"
     assert s["role"] == "owner"
     keys = {x["module_key"] for x in s["subscriptions"]}
-    assert keys == {"hq", "crm", "billing"}
+    assert keys == {"hq", "crm"}          # the base bundle; billing is now a purchasable module (19)
     assert all(x["status"] == "trialing" for x in s["subscriptions"])
     assert s["entitlements"]["crm"] is True and s["entitlements"]["hq"] is True
     assert s["entitlements"]["verify"] is False

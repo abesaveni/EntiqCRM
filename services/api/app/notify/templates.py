@@ -181,3 +181,12 @@ def academy_assigned(*, name: str, course: str, due: str, minutes: int, app_url:
     html = _wrap(subject, [f"Hi {escape(name)},", f"You have been assigned <strong>{escape(course)}</strong> — about {minutes} minutes, due <strong>{escape(due)}</strong>."], ("Start the course", f"{app_url}/academy/my"))
     return subject, text, html
 
+
+def invoice_email(*, name: str, practice: str, number: str, client: str, total: str, due: str, lines: list[tuple[str, str]], reminder: bool = False, days_overdue: int = 0, url: str) -> tuple[str, str, str]:
+    subject = (f"Overdue: invoice {number} from {practice}" if days_overdue > 0 else f"Reminder: invoice {number} from {practice}") if reminder else f"Invoice {number} from {practice}"
+    head = f"Invoice {number} for {client} is {'now ' + str(days_overdue) + ' days overdue' if days_overdue > 0 else 'due ' + due}." if reminder else f"Invoice {number} for {client}, due {due}."
+    body = "".join(f"  {d}   {a}\n" for d, a in lines[:20])
+    text = f"Hi {name},\n\n{head}\n\n{body}\nAmount due: {total}\n\nYou can view it any time in your portal:\n{url}\n\n{practice}"
+    html = _wrap(f"Invoice {number}", [f"Hi {escape(name)},", escape(head), "<ul>" + "".join(f"<li>{escape(d)} — {escape(a)}</li>" for d, a in lines[:20]) + "</ul>", f"<strong>Amount due: {escape(total)}</strong>"], ("View in your portal", url))
+    return subject, text, html
+

@@ -20,6 +20,7 @@ from app.core.security import utcnow
 from app.core.storage import get_storage, make_key
 from app.models.crm import Client
 from app.models.platform import Document
+from app.services import document_service
 from app.services.crm_service import member_names
 
 router = APIRouter(prefix="/documents", tags=["documents"])
@@ -47,33 +48,17 @@ def list_documents(client_id: uuid.UUID | None = None, kind: str | None = None, 
 @router.post("", response_model=S.DocumentOut, status_code=status.HTTP_201_CREATED)
 async def upload(file: UploadFile = File(...), client_id: uuid.UUID | None = Form(None), kind: str = Form("general"), description: str | None = Form(None),
                  p: Principal = Depends(edit), _perm: Principal = Depends(require_permission("crm:edit")), db: Session = Depends(get_db)):
-    data = await file.read()
-    if not data:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail={"error": "empty_file"})
-    if len(data) > settings.MAX_UPLOAD_MB * 1024 * 1024:
-        raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, detail={"error": "file_too_large", "max_mb": settings.MAX_UPLOAD_MB})
     if client_id and db.get(Client, client_id) is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail={"error": "client_not_found"})
-
-    scan_status, signature = av.scan(data)
-    if scan_status == av.INFECTED:
-        audit.record(db, action="document.rejected_infected", actor_user_id=p.user.id, tenant_id=p.tenant.id, target_type="upload", detail={"filename": file.filename, "signature": signature})
-        db.commit()
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, detail={"error": "malware_detected", "signature": signature})
-    if scan_status == av.UNAVAILABLE and settings.is_production:
-        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, detail={"error": "scan_unavailable", "message": "Uploads are refused until the anti-virus scanner is reachable."})
-
-    doc_id = uuid.uuid4()
-    key = make_key(p.tenant.id, doc_id, file.filename or "file")
-    get_storage().put(key, data, file.content_type or "application/octet-stream")
-    d = Document(id=doc_id, tenant_id=p.tenant.id, client_id=client_id, module_key="crm", kind=kind[:40], filename=(file.filename or "file")[:255],
-                 content_type=(file.content_type or "application/octet-stream")[:120], size_bytes=len(data), storage_key=key, sha256=hashlib.sha256(data).hexdigest(),
-                 description=(description or None), uploaded_by_membership_id=p.membership.id, scan_status=scan_status)
-    db.add(d)
-    db.flush()
-    if client_id:
-        events.emit(db, tenant_id=p.tenant.id, client_id=client_id, module_key="crm", kind="document.uploaded", summary=f"Uploaded {d.filename} ({kind})",
-                    detail={"size_bytes": d.size_bytes, "scan": scan_status}, actor_membership_id=p.membership.id, actor_label=p.user.full_name, ref_type="document", ref_id=d.id)
+    data = await file.read()
+    try:
+        d = document_service.store(db, tenant_id=p.tenant.id, data=data, filename=file.filename or "file", content_type=file.content_type, client_id=client_id, module_key="crm",
+                                   kind=kind, uploaded_by_membership_id=p.membership.id, actor_label=p.user.full_name, description=description or None)
+    except document_service.UploadRefused as e:
+        if e.error == "malware_detected":
+            audit.record(db, action="document.rejected_infected", actor_user_id=p.user.id, tenant_id=p.tenant.id, target_type="upload", detail={"filename": file.filename, **e.extra})
+            db.commit()
+        raise HTTPException({"malware_detected": 422, "file_too_large": 413, "scan_unavailable": 503}.get(e.error, 400), detail={"error": e.error, **e.extra})
     db.commit()
     return _out(d, {p.membership.id: p.user.full_name})
 

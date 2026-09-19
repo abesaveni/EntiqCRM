@@ -318,7 +318,7 @@
     "shortName": "Documents",
     "icon": "FolderOpen",
     "outcome": "One permission-aware document system for every EnTIQ module.",
-    "status": "porting",
+    "status": "built",
     "pricing": {
       "model": "tiered",
       "unit": "storage tier",
@@ -341,7 +341,7 @@
     ],
     "nav": [
       {
-        "label": "Documents",
+        "label": "Library",
         "path": "/documents"
       }
     ],
@@ -867,7 +867,7 @@
     "shortName": "Billing",
     "icon": "Receipt",
     "outcome": "Price, contract, invoice and collect every EnTIQ service and subscription from one ledger.",
-    "status": "porting",
+    "status": "built",
     "pricing": {
       "model": "included",
       "unit": "platform service",
@@ -898,8 +898,8 @@
         "path": "/billing"
       },
       {
-        "label": "Payments",
-        "path": "/billing/payments"
+        "label": "Recurring",
+        "path": "/billing"
       }
     ],
     "panels": [

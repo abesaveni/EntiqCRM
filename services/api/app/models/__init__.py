@@ -7,7 +7,9 @@ from app.models.tenant import Tenant
 from app.modules.academy.models import Attempt, Certificate, Course, Enrolment, Lesson, Requirement
 from app.modules.advisory.models import Action, Alert, Meeting, Snapshot
 from app.modules.client.models import PortalLoginToken, PortalMessage, PortalSession
+from app.modules.documents.models import DocumentIndex, Folder, RetentionPolicy
 from app.modules.lending.models import Application, ApplicationEvent, Condition
+from app.modules.practice_billing.models import FeeSchedule, Invoice, InvoiceLine, Payment
 from app.modules.practice.models import Job, RecurringJob, TimeEntry
 from app.modules.requests.models import RequestItem, RequestPack
 from app.modules.sign.models import Agreement, Signer, SignEvent
@@ -31,6 +33,8 @@ __all__ = [
     "Attempt", "Certificate", "Course", "Enrolment", "Lesson", "Requirement",
     "Action", "Alert", "Meeting", "Snapshot",
     "Application", "ApplicationEvent", "Condition",
+    "DocumentIndex", "Folder", "RetentionPolicy",
+    "FeeSchedule", "Invoice", "InvoiceLine", "Payment",
     "LedgerConnection", "Workpaper", "WorkpaperIssue", "WorkpaperItem",
     "Onboarding", "OnboardingStage", "ServiceOffering",
     "RiskAssessment", "Screening", "Verification",

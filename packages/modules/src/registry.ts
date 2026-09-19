@@ -7,7 +7,9 @@ const byKey = new Map<ModuleKey, ModuleManifest>(MANIFESTS.map((m) => [m.key, m]
 export const BASE_BUNDLE: ModuleKey[] = ['hq', 'crm'];
 
 /** Platform services that ship with every tenant but are not shown as purchasable. */
-export const PLATFORM_SERVICES: ModuleKey[] = ['billing'];
+/** Reserved for services the platform provisions itself. EnTIQ's own subscription billing is the
+ *  spine (Practice HQ), not a module, so nothing sits here today. */
+export const PLATFORM_SERVICES: ModuleKey[] = [];
 
 export function getModule(key: ModuleKey): ModuleManifest {
   const m = byKey.get(key);

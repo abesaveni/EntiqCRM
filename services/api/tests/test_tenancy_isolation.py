@@ -21,7 +21,7 @@ def test_read_filter_isolates_tenants(client):
     assert "verify" in keys_a and "verify" not in keys_b
     # and via the API — B never sees A's rows
     subs_b = {x["module_key"] for x in client.get("/api/v1/subscriptions", headers=auth(b["tokens"])).json()}
-    assert subs_b == {"hq", "crm", "billing"}
+    assert subs_b == {"hq", "crm"}
 
 
 def test_scoped_query_without_context_fails_closed(client):
