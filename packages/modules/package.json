@@ -1,0 +1,17 @@
+{
+  "name": "@entiq/modules",
+  "version": "0.1.0",
+  "private": true,
+  "description": "EnTIQ module registry — one manifest per module. The catalogue, navigation, permissions and entitlement checks are all generated from here.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "echo '@entiq/modules is consumed as source by the workspace — no build step'",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

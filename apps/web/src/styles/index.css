@@ -1,0 +1,139 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@source '../../../../packages/ui/src';
+@import '@entiq/ui/styles/tokens.css';
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * shadcn semantic tokens, mapped onto the Entiq "enterprise paper" tokens.
+ * Direction (confirmed in GrowKyc): light near-white canvas, flat bordered
+ * cards, the dark shell ONLY for the module switcher, and ONE accent — Entiq
+ * teal — used only for interactive/active states. Teal is never a background,
+ * header or decoration.
+ */
+:root {
+  --radius: 6px;
+
+  --background: var(--ent-bg);
+  --foreground: var(--ent-ink);
+  --card: var(--ent-surface);
+  --card-foreground: var(--ent-ink);
+  --popover: var(--ent-surface);
+  --popover-foreground: var(--ent-ink);
+
+  --primary: var(--ent-teal);
+  --primary-foreground: #ffffff;
+  --secondary: var(--ent-surface-2);
+  --secondary-foreground: var(--ent-ink);
+  --muted: var(--ent-neutral-bg);
+  --muted-foreground: var(--ent-ink-muted);
+  --accent: var(--ent-teal-tint);
+  --accent-foreground: var(--ent-teal-active);
+  --destructive: var(--ent-error);
+  --destructive-foreground: #ffffff;
+
+  --border: var(--ent-border);
+  --input: var(--ent-border-strong);
+  --input-background: var(--ent-surface);
+  --switch-background: var(--ent-border-strong);
+  --ring: var(--ent-teal-ring);
+
+  --chart-1: var(--ent-teal);
+  --chart-2: #1f6bb4;
+  --chart-3: #0f7b0f;
+  --chart-4: #b45309;
+  --chart-5: #6b7280;
+
+  /* The dark shell — module switcher only. */
+  --sidebar: #0b1220;
+  --sidebar-foreground: #e6e9ef;
+  --sidebar-primary: var(--ent-teal);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #172033;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #1f2a3d;
+  --sidebar-ring: var(--ent-teal-ring);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* status — badges and indicators only */
+  --color-success: var(--ent-success);
+  --color-success-bg: var(--ent-success-bg);
+  --color-warn: var(--ent-warn);
+  --color-warn-bg: var(--ent-warn-bg);
+  --color-error: var(--ent-error);
+  --color-error-bg: var(--ent-error-bg);
+  --color-info: var(--ent-info);
+  --color-info-bg: var(--ent-info-bg);
+
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 6px);
+
+  --font-sans: 'Inter', 'Segoe UI', 'Noto Sans', system-ui, -apple-system, sans-serif;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-size: 14px;
+    line-height: 1.45;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1 { @apply text-[22px] leading-[30px] font-semibold tracking-[-0.01em]; }
+  h2 { @apply text-[18px] leading-[26px] font-semibold; }
+  h3 { @apply text-[15px] leading-[22px] font-semibold; }
+}
+
+/* Utility: the enterprise page column. */
+.page {
+  @apply mx-auto w-full max-w-[1280px] px-6 py-6;
+}

@@ -1,0 +1,78 @@
+/**
+ * entiq-tokens.css — the enterprise design system, single source of truth.
+ *
+ * DIRECTION (confirmed): "enterprise paper" — a light near-white canvas, flat
+ * bordered cards, the dark shell ONLY for the sidebar, and a SINGLE accent
+ * (Entiq teal #0E7C9E) used only for interactive/active states: primary
+ * buttons, active nav/tab, links, stepper current/completed, focus rings.
+ * Everything else is neutral. Teal is never a background, header, or
+ * decoration — that restraint is what reads as enterprise, not consumer.
+ *
+ * Every redesigned screen inherits from these variables, so styling is changed
+ * in ONE place, not per component. Screens opt into the system by living under
+ * a `.ent-scope` container (the console content column, and each full page).
+ */
+
+:root {
+  /* ---- Canvas & surfaces ---- */
+  --ent-bg: #f7f8fa;            /* page background */
+  --ent-surface: #ffffff;       /* cards, panels */
+  --ent-surface-2: #f9fafb;     /* table header, subtle fills */
+  --ent-border: #e5e7eb;        /* 1px hairline borders */
+  --ent-border-strong: #d1d5db; /* input borders, dividers that need weight */
+
+  /* ---- Ink (text) — neutral only ---- */
+  --ent-ink: #201f1e;           /* primary text */
+  --ent-ink-muted: #605e5c;     /* secondary text, captions */
+  --ent-ink-faint: #8a8886;     /* faint labels, placeholders */
+
+  /* ---- The single accent: Entiq teal ---- */
+  --ent-teal: #0E7C9E;
+  --ent-teal-hover: #0b6580;
+  --ent-teal-active: #094f63;
+  --ent-teal-tint: #e6f2f6;     /* active nav/tab background, selection */
+  --ent-teal-ring: rgba(14, 124, 158, .35);
+
+  /* ---- Status — used ONLY on status badges/indicators ---- */
+  --ent-success: #0f7b0f; --ent-success-bg: #e5f3e5;
+  --ent-warn:    #b45309; --ent-warn-bg:    #fdf1e3;
+  --ent-error:   #b3261e; --ent-error-bg:   #fbe9e8;
+  --ent-info:    #1f6bb4; --ent-info-bg:    #e8f1fb;
+  --ent-neutral-bg: #f3f4f6;
+
+  /* ---- Radii (flat, not bubbly) ---- */
+  --ent-radius: 6px;
+  --ent-radius-sm: 4px;
+
+  /* ---- Type: SAP-Fiori / MS-Fluent scale ---- */
+  --ent-font: 'Inter', 'Segoe UI', 'Noto Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/**
+ * The enterprise scope. Put this on the console content column and on each full
+ * page. It sets the canvas, the 14px base type, neutral ink, and tabular
+ * numerals so tables and figures align. It deliberately does NOT touch :root
+ * or body, so the public site and the client onboarding flow keep their own
+ * type without a global 14px regression.
+ */
+.ent-scope {
+  font-family: var(--ent-font);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ent-ink);
+  background: var(--ent-bg);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Modal overlays use `.ent-scope` on the full-screen `fixed inset-0` wrapper so the
+ * modal inherits the ent-* tokens — but `.ent-scope`'s OPAQUE page background then
+ * painted over the whole app behind the modal ("back screen disappears"). When
+ * ent-scope IS the full-screen overlay, paint a translucent scrim instead so the
+ * page shows through, dimmed. The inner modal panel still inherits the tokens.
+ * Higher specificity (3 classes) beats both `.ent-scope` and Tailwind's `bg-black/40`. */
+.ent-scope.fixed.inset-0 {
+  background: rgba(2, 6, 23, 0.5);
+}
+
+/* Numbers that must align in tables/figures. */
+.ent-tnum { font-variant-numeric: tabular-nums; }

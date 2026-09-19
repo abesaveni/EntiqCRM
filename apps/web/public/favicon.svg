@@ -1,0 +1,11 @@
+<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Entiq">
+  <defs>
+    <linearGradient id="g" x1="6" y1="4" x2="42" y2="45" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2AD0F0"/>
+      <stop offset="1" stop-color="#0E7C9E"/>
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" rx="10" fill="#0B1220"/>
+  <path d="M24 6c0 0 7.4 3.7 13.6 5c.8.2 1.4.9 1.4 1.7V24c0 9-6.6 16-15 18.4C15.6 40 9 33 9 24V12.7c0-.8.6-1.5 1.4-1.7C16.6 9.7 24 6 24 6Z" fill="url(#g)"/>
+  <path d="M16.4 24.3l5.6 5.6L32.2 18.4" fill="none" stroke="#ffffff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

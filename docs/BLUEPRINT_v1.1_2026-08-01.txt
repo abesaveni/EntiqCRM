@@ -1,0 +1,1000 @@
+EnTIQ
+Commercial Module Blueprint
+Product, administration and development specification for the complete module catalogue
+Version 1.1  |  1 August 2026
+BLUEPRINT PURPOSEDefine what each EnTIQ module looks like, how users move through it, which data it owns, and how all modules work together.
+1. Blueprint principles
+One EnTIQ account, one client and entity graph, one permissions model and one audit standard.
+Each module can be purchased separately but must work immediately with every other enabled module.
+Practice HQ is the only practice administration surface for subscriptions, integrations, settings, users and access.
+Control Centre is restricted to EnTIQ operators and controls practices, platform operations, security and support.
+Client information, identity checks, documents and relationships are captured once and reused with permission.
+Every important decision keeps its source evidence, policy version, human owner and audit chronology.
+AI detects, explains and drafts. High-risk decisions, advice, signatures, credit and money movement remain controlled.
+Brickbanq, Recover and Restructure are retired products. Useful components are reused inside active modules.
+2. Shared product experience
+Navigation: A consistent left module switcher, contextual workspace navigation, global search, notifications and user menu.
+Home: A role-based dashboard showing work due, risks, approvals, recent activity and next best actions.
+Workspaces: Clients, entities, cases, jobs, projects, funds and settlements use a common workspace pattern.
+Queues: Review, approval, exception and escalation queues use consistent status, owner, priority and SLA controls.
+Client experience: EnTIQ Client presents only enabled modules and permitted actions in plain English.
+Accessibility: Responsive layouts, keyboard support, clear focus, readable contrast and screen-reader labels are release requirements.
+3. Commercial module catalogue
+Practice HQ is included with every practice. Control Centre is an internal EnTIQ module. The remaining modules are customer-selectable products.
+Module
+Primary outcome
+Commercial role
+EnTIQ Practice HQ
+Give each practice one administration centre for subscriptions, integrations, users, permissions and platform settings.
+Included with every EnTIQ practice tenant. Module purchases and usage are controlled here.
+EnTIQ Control Centre
+Give authorised EnTIQ operators one internal control centre for practices, modules, platform operations, security and support.
+Internal EnTIQ operating module. It is never sold or exposed to practice users.
+EnTIQ Start
+Move a prospect from service selection to an accepted, verified and activated client.
+Base onboarding module, priced by firm plus activated client volume.
+EnTIQ Verify
+Complete identity, entity, beneficial ownership and AML/CTF compliance in one controlled module.
+Per verification, per monitored subject and data-provider usage.
+EnTIQ Sign
+Prepare, approve, sign, seal and independently verify agreements and declarations.
+Per user plus completed-envelope allowance and identity-check usage.
+EnTIQ Requests
+Collect complete, correctly classified client information through adaptive secure requests.
+Per active request pack, storage and extraction usage.
+EnTIQ Documents
+Provide one permission-aware document system for every EnTIQ module.
+Storage and processing tiers with module allowances.
+EnTIQ Workpapers
+Prepare, review and sign off accounting and tax workpapers with linked evidence and controlled automation.
+Per firm seat, active entity or annual job volume.
+EnTIQ Practice
+Run clients, jobs, teams, deadlines and service delivery from one practice operating system.
+Per staff seat with practice-size tiers.
+EnTIQ Advisory
+Turn accounting and business data into regular management decisions, meetings and accountable actions.
+Per advisory client and meeting cadence.
+EnTIQ Capital
+Manage private capital opportunities from intake through diligence, matching, terms, settlement and reporting.
+Per seat plus active opportunity and completed transaction fees.
+EnTIQ Credit
+Create lender-ready credit packs and controlled credit decisions from verified source evidence.
+Per credit user and completed assessment.
+EnTIQ Settle
+Coordinate participants, legal documents, conditions and digital settlement through one controlled workspace.
+Per active settlement or annual volume tier.
+EnTIQ Client
+Give each client one phone-first portal for every service and module they use.
+Included with subscribed modules; premium branding and advanced access options.
+EnTIQ Academy
+Prove staff competency, compliance training and annual refreshers with regulator-ready evidence.
+Per active learner with compliance-content packs.
+EnTIQ CRM
+Maintain one relationship record across prospects, clients, investors, lenders and professional partners.
+Per user plus contact-volume tiers.
+EnTIQ Marketing
+Plan, approve and measure compliant campaigns across email, SMS and social channels.
+Per marketing seat, contact count and message usage.
+EnTIQ Projects
+Plan and deliver internal and client projects with clear ownership, milestones, effort and outcomes.
+Per user and active project tier.
+EnTIQ Billing
+Price, contract, invoice and collect every EnTIQ service and subscription from one ledger.
+Platform service; advanced billing features included by plan.
+EnTIQ Lending
+Manage finance enquiries and applications through approval, conditions, settlement and handover.
+Per broker/credit seat plus settled-loan volume.
+EnTIQ Loan Manager
+Administer facilities after settlement, including payments, conditions, arrears, draws and investor reporting.
+Per active facility and administration user.
+EnTIQ Funds
+Manage investor onboarding, allocations, closes, holdings, exposure and fund reporting.
+Per fund, investor and assets-under-administration tier.
+EnTIQ Trust
+Maintain trust structures, registers, decisions, compliance and recurring administration.
+Per active trust and professional user.
+EnTIQ Associations
+Run memberships, governance, committees, meetings, finances and compliance for incorporated associations.
+Per association and administrator seat.
+4. Shared platform services
+Practice HQ tenant administration
+EnTIQ Control Centre platform operations
+Tenant and organisation management
+Identity and access control
+Party, entity and relationship graph
+Entitlements, subscriptions and billing
+Workflow, tasks, approvals and SLA timers
+Documents, OCR, search and retention
+Communications and notifications
+Audit, evidence and reporting
+Integration hub
+AI control plane and evaluation
+5. Module interaction model
+Control Centre creates and governs practice tenants, plans, modules and platform operations.
+Practice HQ lets each practice select modules, connect integrations and administer settings and access.
+Start creates the client, service package and activation record.
+Verify supplies identity, ownership, AML/CTF and monitoring results.
+Requests and Documents collect and preserve evidence.
+Sign supplies approvals, signatures and independent evidence.
+Practice, Workpapers and Advisory deliver professional services.
+CRM, Marketing, Projects and Billing support growth and operations.
+Credit, Lending, Capital, Loan Manager, Funds and Settle support finance transactions and administration.
+Client provides one external experience. Academy proves staff competency.
+MODULE 01
+EnTIQ Practice HQ
+Give each practice one administration centre for subscriptions, integrations, users, permissions and platform settings.
+Primary users: Practice owner, tenant administrator, security administrator, billing administrator and integration administrator
+Commercial model: Included with every EnTIQ practice tenant. Module purchases and usage are controlled here.
+Source assets: New platform administration requirement, shared tenant, identity, entitlement and integration services.
+Experience and screens
+Practice setup and activation wizard
+Module catalogue and subscription selection
+Subscription, usage and billing dashboard
+Integration hub for Xero, Microsoft 365 and approved providers
+User directory and invitation centre
+User access matrix with module tick boxes and permission levels
+Custom roles and permission templates
+Teams, offices and reporting lines
+Practice profile, branding, domains and communications
+Security, authentication and session policies
+Module settings and shared defaults
+Data, retention and privacy controls
+Audit, access reviews and administrator reports
+Core workflow
+Create practice > verify administrator > configure practice profile > choose modules > accept pricing and terms > provision entitlements > connect integrations > configure shared settings > invite users > tick enabled modules and access rights > test connections > activate practice > review access and subscriptions regularly.
+Data ownership
+Practice tenant, subscription, module entitlement, plan, usage allowance, integration connection, encrypted credential reference, user, team, office, role, permission grant, access policy, branding setting, notification setting, security policy and administrator audit event.
+Connections
+Xero, Microsoft 365, EnTIQ Billing, identity provider, payment service and every subscribed EnTIQ module through the shared entitlement and permissions services.
+AI and control boundary
+Explain settings, suggest role templates, detect excessive permissions and flag failed integrations. AI cannot purchase modules, grant privileged access, reveal credentials or weaken security policies.
+Reports and evidence
+Subscribed modules, users by module, privileged access, dormant accounts, integration health, usage, invoices, configuration changes and periodic access-review pack.
+Minimum release acceptance
+Role and tenant permissions enforced server-side.
+Primary workflow works end to end with persistent data.
+Audit events record creation, approval, change and completion.
+Empty, loading, error and mobile states are complete.
+Critical calculations and transitions have automated tests.
+Cross-module links use shared IDs and do not duplicate source records.
+MODULE 02
+EnTIQ Control Centre
+Give authorised EnTIQ operators one internal control centre for practices, modules, platform operations, security and support.
+Primary users: EnTIQ platform administrator, operations manager, security officer, billing operator, support officer, product owner and auditor
+Commercial model: Internal EnTIQ operating module. It is never sold or exposed to practice users.
+Source assets: New platform owner administration requirement and shared operations, entitlement, security and support services.
+Experience and screens
+Platform overview and service health
+Practice and tenant directory
+Practice detail, status and lifecycle controls
+Module catalogue, plans, pricing and entitlements
+Provisioning and subscription operations
+Global integration and provider registry
+Feature flags, release rings and module availability
+Usage, billing exceptions and revenue controls
+Support cases and controlled support access
+Security events, risk alerts and access reviews
+Platform audit trail and evidence search
+Global templates, policies and configuration
+AI models, agents, prompts, evaluations and kill switches
+Incidents, maintenance and status communications
+Core workflow
+Approve practice > create tenant > assign plan and region > provision modules > monitor health and usage > manage providers and feature releases > investigate alerts or support cases > approve time-limited support access > correct entitlement or billing exceptions > suspend or close tenant when authorised > retain full evidence.
+Data ownership
+Platform tenant index, practice status, product catalogue, plan, price, entitlement rule, feature flag, release ring, provider configuration, service health event, usage event, billing exception, support case, privileged-access approval, incident, global policy, AI configuration and immutable operator audit event.
+Connections
+Practice HQ, Billing, identity provider, cloud infrastructure, observability, payments, communications, support desk, source control and all EnTIQ module services.
+AI and control boundary
+Summarise incidents, detect unusual usage, triage support cases and monitor model quality. AI cannot access tenant content by default, approve privileged access, change prices, release code, suspend practices or move money.
+Reports and evidence
+Practice register, active modules, platform usage, revenue, service health, incidents, security events, privileged access, release adoption, provider performance and full operator audit pack.
+Minimum release acceptance
+Role and tenant permissions enforced server-side.
+Primary workflow works end to end with persistent data.
+Audit events record creation, approval, change and completion.
+Empty, loading, error and mobile states are complete.
+Critical calculations and transitions have automated tests.
+Cross-module links use shared IDs and do not duplicate source records.
+MODULE 03
+EnTIQ Start
+Move a prospect from service selection to an accepted, verified and activated client.
+Primary users: Firm administrator, partner, manager, onboarding officer, prospective client
+Commercial model: Base onboarding module, priced by firm plus activated client volume.
+Source assets: Entiq-Start-, Growaccounting-, accounting portal concepts.
+Experience and screens
+Public service and package selection
+Practice and client setup wizard
+Entity and contact capture
+Engagement and authority centre
+Verification, signing and payment status
+Acceptance review queue
+Activation and handover dashboard
+Core workflow
+Select services > create intake > capture parties and entities > request documents > call Verify > prepare engagement > call Sign > collect payment authority > approve acceptance > activate subscribed modules.
+Data ownership
+Prospect, service package, party, entity, relationship, onboarding session, checklist, acceptance decision, engagement, consent and activation record.
+Connections
+EnTIQ Verify, Sign, Requests, Billing, Client, CRM, Microsoft 365, Xero.
+AI and control boundary
+Draft checklists, detect missing information, explain requirements and prepare acceptance summaries. No autonomous acceptance or risk override.
+Reports and evidence
+Onboarding pipeline, completion time, blockers, conversion, rejected clients and acceptance audit pack.
+Minimum release acceptance
+Role and tenant permissions enforced server-side.
+Primary workflow works end to end with persistent data.
+Audit events record creation, approval, change and completion.
+Empty, loading, error and mobile states are complete.
+Critical calculations and transitions have automated tests.
+Cross-module links use shared IDs and do not duplicate source records.
+MODULE 04
+EnTIQ Verify
+Complete identity, entity, beneficial ownership and AML/CTF compliance in one controlled module.
+Primary users: Compliance officer, partner, reviewer, onboarding officer, client, beneficial owner
+Commercial model: Per verification, per monitored subject and data-provider usage.
+Source assets: AML-CTF-Program-Agent, entiq-client-mobile, Entiq-Start-, reusable Brickbanq KYC assets.
+Experience and screens
+Verification work queue
+Individual identity wallet
+Entity and ownership graph
+Identity and document verification
+Risk assessment builder
+Screening results and match review
+Source of funds and wealth
+Decision and escalation panel
+Monitoring alerts
+Compliance reports and restricted record area
+Core workflow
+Create verification case > capture identity/entity > build ownership > verify evidence > screen parties > assess risks > collect funds/wealth evidence > review matches > record human decision > issue report > monitor and rescreen.
+Data ownership
+Verification case, party, identity profile, document evidence, entity, ownership edge, screening hit, risk factor, funds/wealth declaration, decision, alert, monitoring event and restricted suspicion record.
+Connections
+Didit or selected identity provider, ASIC/ABR, OpenSanctions and configured data files, adverse-media sources, EnTIQ Start, Requests, Documents and Client.
+AI and control boundary
+Entity mapping, fuzzy-match ranking, media triage, evidence-gap detection and draft risk narratives. Named humans control decisions and restricted records.
+Reports and evidence
+Identity report, entity verification, beneficial ownership report, AML/CTF risk assessment, match disposition, monitoring history and audit pack.
+Minimum release acceptance
+Role and tenant permissions enforced server-side.
+Primary workflow works end to end with persistent data.
+Audit events record creation, approval, change and completion.
+Empty, loading, error and mobile states are complete.
+Critical calculations and transitions have automated tests.
+Cross-module links use shared IDs and do not duplicate source records.
+MODULE 05
+EnTIQ Sign
+Prepare, approve, sign, seal and independently verify agreements and declarations.
+Primary users: Document owner, approver, sender, signer, witness, administrator, auditor
+Commercial model: Per user plus completed-envelope allowance and identity-check usage.
+Source assets: Grow--E-sign-, Entiq-Start-, reusable signing assets from original designs.
+Experience and screens
+Agreement dashboard
+Template and clause library
+Document preparation
+Field and signer editor
+Approval workflow
+Signer experience
+Identity and consent step
+Completion certificate
+Evidence package and offline verifier
+Core workflow
+Create agreement > select template > place fields > nominate signers > internal approvals > verify signer if required > sign > seal final PDF > issue certificate > preserve evidence and retention state.
+Data ownership
+Agreement, version, document hash, signer, field, approval, authentication event, signature event, evidence event, sealed file, certificate and verification key.
+Connections
+EnTIQ Start, Verify, Documents, Billing, Settle, Academy, email and SMS.
+AI and control boundary
+Draft from approved templates, detect missing fields and compare clauses. AI cannot sign, witness, alter completed evidence or issue legal advice.
+Reports and evidence
+Agreement register, signing status, evidence certificate, audit chronology and verification result.
+Minimum release acceptance
+Role and tenant permissions enforced server-side.
+Primary workflow works end to end with persistent data.
+Audit events record creation, approval, change and completion.
+Empty, loading, error and mobile states are complete.
+Critical calculations and transitions have automated tests.
+Cross-module links use shared IDs and do not duplicate source records.
+MODULE 06
+EnTIQ Requests
+Collect complete, correctly classified client information through adaptive secure requests.
+Primary users: Case owner, preparer, reviewer, client, broker, borrower and external contributor
+Commercial model: Per active request pack, storage and extraction usage.
+Source assets: RequestIQ and smart-request concepts from Growaccounting-.
+Experience and screens
+Request dashboard
+Template and checklist builder
+Secure upload link
+Client request portal
+Document classification and extraction
+Exception review queue
+Bulk approval
+Case-field sync and completion status
+Core workflow
+Choose template > issue secure request > receive files and answers > classify and extract > match against requirements > request missing items > review exceptions > approve fields > sync case > mark ready.
+Data ownership
+Request pack, requirement, contributor, upload token, document, extraction, source evidence, exception, approval, reminder and case-field mapping.
+Connections
+EnTIQ Documents, Client, Start, Verify, Credit, Lending, Practice and communications.
+AI and control boundary
+Classify documents, extract fields, find missing evidence and draft follow-ups. High-risk fields require staff approval.
+Reports and evidence
+Outstanding requests, turnaround, exception rate, approval history and completeness certificate.
+Minimum release acceptance
+Role and tenant permissions enforced server-side.
+Primary workflow works end to end with persistent data.
+Audit events record creation, approval, change and completion.
+Empty, loading, error and mobile states are complete.
+Critical calculations and transitions have automated tests.
+Cross-module links use shared IDs and do not duplicate source records.
+MODULE 07
+EnTIQ Documents
+Provide one permission-aware document system for every EnTIQ module.
+Primary users: All staff and clients subject to permissions
+Commercial model: Storage and processing tiers with module allowances.
+Source assets: Grow Accounting, RequestIQ, Excel workpapers and original document-manager concepts.
+Experience and screens
+Document library
+Recent and requested views
+Upload and capture
+Preview and metadata
+Classification review
+Version and retention history
+Access sharing
+Evidence links
+Search and duplicate review
+Core workflow
+Upload or ingest > malware check > hash > store > OCR/classify > extract metadata > link to party/entity/case/job > review > retain or dispose under policy.
+Data ownership
+Document, binary object, version, hash, classification, extraction, access grant, retention policy, link, evidence reference and disposal event.
+Connections
+All modules, S3/Azure storage, OCR providers, Microsoft 365, email and external storage.
+AI and control boundary
+Classification, extraction, duplicate detection, matching and summary. Original file and source coordinates remain authoritative.
+Reports and evidence
+Document register, access history, retention schedule, missing evidence and storage usage.
+Minimum release acceptance
+Role and tenant permissions enforced server-side.
+Primary workflow works end to end with persistent data.
+Audit events record creation, approval, change and completion.
+Empty, loading, error and mobile states are complete.
+Critical calculations and transitions have automated tests.
+Cross-module links use shared IDs and do not duplicate source records.
+MODULE 08
+EnTIQ Workpapers
+Prepare, review and sign off accounting and tax workpapers with linked evidence and controlled automation.
+Primary users: Graduate, accountant, senior, reviewer, manager, partner and client contributor
+Commercial model: Per firm seat, active entity or annual job volume.
+Source assets: Grow-Accounting-Monday-28072026, Buildgrowadvisorydashboard, excel-tax-workpapers.
+Experience and screens
+Workpaper binder
+Lead schedules
+Trial balance and mapping
+Workpaper editor
+Evidence panel
+AI review points
+Review mode
+Sign-off summary
+Journal controls
+Export and archive
+Core workflow
+Open job > import Xero/TB/GL > generate binder > map accounts > prepare schedules > attach evidence > run rules and AI review > resolve points > preparer sign-off > reviewer sign-off > post approved journals > finalise and archive.
+Data ownership
+Binder, module, account mapping, balance, adjustment, schedule, evidence link, review point, sign-off, lock state, journal and export.
+Connections
+Xero, Documents, Requests, Practice, Client and accounting data importers.
+AI and control boundary
+Coding suggestions, variance analysis, evidence checks, review simulation and missing-information detection. Journals and final sign-off require human approval.
+Reports and evidence
+Completion, unresolved review points, adjustments, sign-offs, audit trail and final workpaper pack.
+Minimum release acceptance
+Role and tenant permissions enforced server-side.
+Primary workflow works end to end with persistent data.
+Audit events record creation, approval, change and completion.
+Empty, loading, error and mobile states are complete.
+Critical calculations and transitions have automated tests.
+Cross-module links use shared IDs and do not duplicate source records.
+MODULE 09
+EnTIQ Practice
+Run clients, jobs, teams, deadlines and service delivery from one practice operating system.
+Primary users: Administrator, preparer, manager, partner and practice owner
+Commercial model: Per staff seat with practice-size tiers.
+Source assets: Grow-Accounting-Monday-28072026 and Buildgrowadvisorydashboard.
+Experience and screens
+Firm dashboard
+Client and group directory
+Jobs table and Kanban
+Job detail
+Workflow builder
+Recurring jobs
+Task and intray centre
+Resource and capacity planning
+Time and calendar
+Review queue
+Practice analytics
+Core workflow
+Create client/service > generate recurring jobs > assign team > collect requirements > complete work > review > deliver > bill > monitor SLA and next cycle.
+Data ownership
+Firm, office, staff, client group, service, job, workflow, task, assignment, capacity, time entry, deadline, SLA and status event.
+Connections
+Start, Workpapers, Requests, Documents, Billing, CRM, Advisory, Microsoft 365 and Xero.
+AI and control boundary
+Job orchestration, delay prediction, missing-information hunting, workload suggestions and draft client updates. Staff retain assignment and delivery control.
+Reports and evidence
+WIP, deadlines, capacity, turnaround, productivity, recovery, client status and service profitability.
+Minimum release acceptance
+Role and tenant permissions enforced server-side.
+Primary workflow works end to end with persistent data.
+Audit events record creation, approval, change and completion.
+Empty, loading, error and mobile states are complete.
+Critical calculations and transitions have automated tests.
+Cross-module links use shared IDs and do not duplicate source records.
+MODULE 10
+EnTIQ Advisory
+Turn accounting and business data into regular management decisions, meetings and accountable actions.
+Primary users: Partner, adviser, client owner, CFO, manager and invited leadership team
+Commercial model: Per advisory client and meeting cadence.
+Source assets: Grow-Accounting-Monday-28072026 and Growaccounting- management-team specification.
+Experience and screens
+Advisory dashboard
+Opportunity and alert feed
+Management reporting
+Scenario modeller
+Meeting agenda
+Guided meeting room
+Decision log
+Action tracker
+AI management team
+Quarterly planning
+Core workflow
+Connect data > monitor signals > create insights > staff review > publish agenda > conduct meeting > record decisions > assign actions > track outcomes > carry forward unresolved items.
+Data ownership
+Metric, insight, scenario, agent output, meeting, agenda item, decision, action, owner, due date and outcome.
+Connections
+Practice, Workpapers, Xero, CRM, Lending, Capital, Documents and communications.
+AI and control boundary
+CFO, accountant, HR, operations, sales, marketing, funding, strategy, meeting and document roles with structured handoffs. Sensitive advice requires approval.
+Reports and evidence
+Management pack, cash and KPI trends, meeting summary, decisions, actions and advisory value report.
+Minimum release acceptance
+Role and tenant permissions enforced server-side.
+Primary workflow works end to end with persistent data.
+Audit events record creation, approval, change and completion.
+Empty, loading, error and mobile states are complete.
+Critical calculations and transitions have automated tests.
+Cross-module links use shared IDs and do not duplicate source records.
+MODULE 11
+EnTIQ Capital
+Manage private capital opportunities from intake through diligence, matching, terms, settlement and reporting.
+Primary users: Sponsor, broker, analyst, credit officer, investor, lender, lawyer and administrator
+Commercial model: Per seat plus active opportunity and completed transaction fees.
+Source assets: grow-capital-plateform and selected original capital-market concepts.
+Experience and screens
+Opportunity pipeline
+Intake and mandate
+Diligence workspace
+Deal room
+Investment memorandum
+Capital-provider matching
+Expressions of interest
+Terms and approvals
+Settlement tracker
+Ongoing reporting
+Core workflow
+Receive opportunity > verify parties > mandate > collect diligence > assess and approve > publish controlled deal room > match providers > receive interest > negotiate terms > sign > settle > monitor covenants and reporting.
+Data ownership
+Opportunity, sponsor, mandate, asset, facility request, diligence item, deal room, provider profile, match, interest, term, approval, settlement and report.
+Connections
+Verify, Sign, Requests, Documents, Credit, Lending, Funds, Settle, Billing and CRM.
+AI and control boundary
+Diligence gaps, deal summaries, provider matching and draft investment materials. Human approval controls publication, credit and terms.
+Reports and evidence
+Pipeline, deal readiness, provider activity, terms, settlement, capital raised and post-close reporting.
+Minimum release acceptance
+Role and tenant permissions enforced server-side.
+Primary workflow works end to end with persistent data.
+Audit events record creation, approval, change and completion.
+Empty, loading, error and mobile states are complete.
+Critical calculations and transitions have automated tests.
+Cross-module links use shared IDs and do not duplicate source records.
+MODULE 12
+EnTIQ Credit
+Create lender-ready credit packs and controlled credit decisions from verified source evidence.
+Primary users: Broker, analyst, credit officer, approver, lender and borrower
+Commercial model: Per credit user and completed assessment.
+Source assets: RequestIQ, grow-capital-plateform, PFA and reusable Brickbanq credit assets.
+Experience and screens
+Credit queue
+Application summary
+Borrower and guarantor view
+Security and valuation
+Financial analysis
+Policy matrix
+Exceptions and mitigants
+Serviceability and covenants
+Approval memorandum
+Conditions and submission pack
+Core workflow
+Receive application > verify parties > collect documents > extract and approve figures > analyse serviceability/security > test policy > record exceptions > prepare recommendation > approve > issue lender pack and conditions.
+Data ownership
+Application, applicant, facility request, financial period, adjustment, security, valuation, policy rule, exception, mitigant, condition, decision and credit memorandum.
+Connections
+Requests, Verify, Documents, Lending, Capital, Sign, external credit bureaus and valuation sources.
+AI and control boundary
+Extract figures, compare policies, draft analysis and flag inconsistencies. Credit decisions and representations remain human-controlled.
+Reports and evidence
+Credit memorandum, servicing analysis, security table, policy exceptions, approval record and lender submission.
+Minimum release acceptance
+Role and tenant permissions enforced server-side.
+Primary workflow works end to end with persistent data.
+Audit events record creation, approval, change and completion.
+Empty, loading, error and mobile states are complete.
+Critical calculations and transitions have automated tests.
+Cross-module links use shared IDs and do not duplicate source records.
+MODULE 13
+EnTIQ Settle
+Coordinate participants, legal documents, conditions and digital settlement through one controlled workspace.
+Primary users: Settlement officer, lawyer, lender, borrower, broker, administrator and external participant
+Commercial model: Per active settlement or annual volume tier.
+Source assets: Reusable settlement and PEXA assets from retired Brickbanq builds and original settlement portal.
+Experience and screens
+Settlement dashboard
+Workspace and participants
+Condition checklist
+Document room
+PEXA status
+Funds and payout schedule
+Approval and signing
+Milestone timeline
+Exceptions and communications
+Completion pack
+Core workflow
+Create settlement > invite participants > confirm conditions > collect and approve documents > prepare signing > reconcile funds and payouts > update PEXA > resolve exceptions > settle > issue completion evidence.
+Data ownership
+Settlement, participant, role, condition, milestone, workspace reference, payout, funds source, document, approval, signature, exception and completion event.
+Connections
+Sign, Verify, Documents, Requests, Lending, Capital, PEXA and payment services.
+AI and control boundary
+Checklist generation, missing-condition detection, document matching and status summaries. No autonomous funds movement or legal certification.
+Reports and evidence
+Settlement checklist, funds schedule, participant status, exception log and completion pack.
+Minimum release acceptance
+Role and tenant permissions enforced server-side.
+Primary workflow works end to end with persistent data.
+Audit events record creation, approval, change and completion.
+Empty, loading, error and mobile states are complete.
+Critical calculations and transitions have automated tests.
+Cross-module links use shared IDs and do not duplicate source records.
+MODULE 14
+EnTIQ Client
+Give each client one phone-first portal for every service and module they use.
+Primary users: Client owner, client team member, borrower, investor, signer and external contributor
+Commercial model: Included with subscribed modules; premium branding and advanced access options.
+Source assets: entiq-client-mobile and Growaccounting- client portal.
+Experience and screens
+Personalised home
+Onboarding status
+Identity wallet
+Tasks and requests
+Documents
+Messages
+Meetings and actions
+Agreements
+Cases and applications
+Settings, consent and integrations
+Core workflow
+Accept invitation > secure account > complete required actions > upload/approve documents > sign and verify > communicate > track services > receive alerts > manage access and consent.
+Data ownership
+Portal user, client role, invitation, consent, notification preference, task view, module entitlement and device/session record.
+Connections
+Every customer-facing module, communications and identity provider.
+AI and control boundary
+Plain-English assistance, request guidance, document finding and question routing. Client-visible advice follows module approval rules.
+Reports and evidence
+Client activity, adoption, outstanding actions, response time and access history.
+Minimum release acceptance
+Role and tenant permissions enforced server-side.
+Primary workflow works end to end with persistent data.
+Audit events record creation, approval, change and completion.
+Empty, loading, error and mobile states are complete.
+Critical calculations and transitions have automated tests.
+Cross-module links use shared IDs and do not duplicate source records.
+MODULE 15
+EnTIQ Academy
+Prove staff competency, compliance training and annual refreshers with regulator-ready evidence.
+Primary users: Staff member, manager, compliance officer, administrator, director and auditor
+Commercial model: Per active learner with compliance-content packs.
+Source assets: Staff Training Platform (3).zip.
+Experience and screens
+Learning dashboard
+Training catalogue
+My learning
+Course and video player
+Quiz and scenarios
+Declarations
+Certificates
+Compliance register
+Risk assessment
+Audit centre
+Reports
+Course and assignment administration
+Core workflow
+Publish versioned course > assign by role > notify learner > track learning > assess server-side > manage retakes > obtain declaration/signature > issue certificate > schedule refresher > export audit evidence.
+Data ownership
+Course, version, module, assignment, learner, attempt, answer, score, competency, declaration, certificate, refresher cycle and evidence event.
+Connections
+Sign, Verify, Documents, Practice, Teams/email and reporting.
+AI and control boundary
+Course summaries, scenario explanations and learner assistance grounded in approved materials. AI cannot change scores or certify competency.
+Reports and evidence
+Completion, overdue training, results, competency, declarations, certificates, refresher status and AUSTRAC/TPB audit packs.
+Minimum release acceptance
+Role and tenant permissions enforced server-side.
+Primary workflow works end to end with persistent data.
+Audit events record creation, approval, change and completion.
+Empty, loading, error and mobile states are complete.
+Critical calculations and transitions have automated tests.
+Cross-module links use shared IDs and do not duplicate source records.
+MODULE 16
+EnTIQ CRM
+Maintain one relationship record across prospects, clients, investors, lenders and professional partners.
+Primary users: Sales, marketing, adviser, broker, partner, service team and administrator
+Commercial model: Per user plus contact-volume tiers.
+Source assets: Original OneCore CRM and shared client/party concepts.
+Experience and screens
+Contact and organisation directory
+Relationship view
+Lead inbox
+Opportunity pipeline
+Activities and communications
+Service history
+Referrals
+Tasks and follow-ups
+Segments and lists
+CRM analytics
+Core workflow
+Capture contact > identify relationships > qualify lead > create opportunity > record activities > convert to client/case > maintain service and referral history > trigger retention actions.
+Data ownership
+Party, organisation, relationship, lead, opportunity, stage, activity, referral, source, consent, segment and owner.
+Connections
+Start, Practice, Capital, Lending, Marketing, Client, Microsoft 365 and communications.
+AI and control boundary
+Data cleansing, duplicate matching, lead summarisation, next-action suggestions and draft follow-ups.
+Reports and evidence
+Pipeline, conversion, source, activity, referrals, retention and relationship coverage.
+Minimum release acceptance
+Role and tenant permissions enforced server-side.
+Primary workflow works end to end with persistent data.
+Audit events record creation, approval, change and completion.
+Empty, loading, error and mobile states are complete.
+Critical calculations and transitions have automated tests.
+Cross-module links use shared IDs and do not duplicate source records.
+MODULE 17
+EnTIQ Marketing
+Plan, approve and measure compliant campaigns across email, SMS and social channels.
+Primary users: Marketing manager, content creator, approver, sales team and administrator
+Commercial model: Per marketing seat, contact count and message usage.
+Source assets: Original OneCore Marketing concepts.
+Experience and screens
+Campaign dashboard
+Audience builder
+Content calendar
+Email and SMS builder
+Social composer
+Approval queue
+Automation journeys
+Asset library
+Delivery analytics
+Consent and suppression centre
+Core workflow
+Define objective > select consented audience > create content > approve > schedule > deliver through channel > capture engagement > create CRM activities/leads > analyse and improve.
+Data ownership
+Campaign, audience, consent, suppression, content version, channel message, schedule, approval, delivery event, engagement and conversion.
+Connections
+CRM, Documents, Billing, email/SMS/social providers and Client.
+AI and control boundary
+Draft content, adapt channels, segment suggestions and performance summaries. Approval and consent rules gate delivery.
+Reports and evidence
+Delivery, engagement, conversion, channel cost, consent and campaign attribution.
+Minimum release acceptance
+Role and tenant permissions enforced server-side.
+Primary workflow works end to end with persistent data.
+Audit events record creation, approval, change and completion.
+Empty, loading, error and mobile states are complete.
+Critical calculations and transitions have automated tests.
+Cross-module links use shared IDs and do not duplicate source records.
+MODULE 18
+EnTIQ Projects
+Plan and deliver internal and client projects with clear ownership, milestones, effort and outcomes.
+Primary users: Project manager, service owner, team member, client participant and executive
+Commercial model: Per user and active project tier.
+Source assets: Original OneCore Projects and accounting workflow assets.
+Experience and screens
+Project portfolio
+Project overview
+Board, list and timeline
+Milestones
+Tasks and dependencies
+Resources and time
+Documents and decisions
+Client status
+Risks and changes
+Portfolio reporting
+Core workflow
+Create project > define scope/milestones > assign team > plan dependencies > execute tasks > manage changes/risks > communicate status > approve deliverables > close and review.
+Data ownership
+Project, milestone, task, dependency, assignment, time, budget, risk, issue, change, decision, deliverable and status event.
+Connections
+CRM, Practice, Documents, Client, Billing and communications.
+AI and control boundary
+Plan suggestions, delay risks, status drafts and meeting action extraction.
+Reports and evidence
+Portfolio status, milestones, workload, budget/time, risks, changes and delivery performance.
+Minimum release acceptance
+Role and tenant permissions enforced server-side.
+Primary workflow works end to end with persistent data.
+Audit events record creation, approval, change and completion.
+Empty, loading, error and mobile states are complete.
+Critical calculations and transitions have automated tests.
+Cross-module links use shared IDs and do not duplicate source records.
+MODULE 19
+EnTIQ Billing
+Price, contract, invoice and collect every EnTIQ service and subscription from one ledger.
+Primary users: Billing administrator, partner, finance team, service owner and client payer
+Commercial model: Platform service; advanced billing features included by plan.
+Source assets: Original billing/payment concepts and Entiq-Start-.
+Experience and screens
+Product and price catalogue
+Quotes and proposals
+Subscription and entitlement view
+Invoices and bills
+Payment methods
+Usage and overages
+Credits and refunds
+Collections
+Commissions
+Revenue analytics
+Core workflow
+Configure product/price > quote > accept/sign > activate entitlement > meter usage > invoice > collect/reconcile > manage failed payments/credits > recognise service and commission outcomes.
+Data ownership
+Product, price, plan, subscription, entitlement, usage event, quote, invoice, line, payment, refund, credit, commission and reconciliation.
+Connections
+Start, Sign, CRM, Practice, payment gateway, accounting system and every billable module.
+AI and control boundary
+Pricing comparisons, billing anomaly detection and collections prioritisation. No autonomous price changes, refunds or money movement.
+Reports and evidence
+MRR, usage, invoices, collections, churn, revenue by module and commissions.
+Minimum release acceptance
+Role and tenant permissions enforced server-side.
+Primary workflow works end to end with persistent data.
+Audit events record creation, approval, change and completion.
+Empty, loading, error and mobile states are complete.
+Critical calculations and transitions have automated tests.
+Cross-module links use shared IDs and do not duplicate source records.
+MODULE 20
+EnTIQ Lending
+Manage finance enquiries and applications through approval, conditions, settlement and handover.
+Primary users: Broker, borrower, analyst, credit officer, lender, settlement officer and administrator
+Commercial model: Per broker/credit seat plus settled-loan volume.
+Source assets: Original PFA, RequestIQ, Capital and reusable Brickbanq lending assets.
+Experience and screens
+Enquiry and pipeline
+New application
+Borrower portal
+Product matching
+Scenario calculator
+Application workspace
+Credit status
+Conditions monitor
+Lender submission
+Settlement and handover
+Core workflow
+Capture enquiry > verify borrower > collect requirements > model scenario > select products > build application > credit assess > submit lender > manage conditions > sign > settle > hand to Loan Manager.
+Data ownership
+Enquiry, application, borrower, guarantor, facility request, purpose, security, product, scenario, submission, lender response, condition and settlement.
+Connections
+CRM, Start, Verify, Requests, Credit, Sign, Settle, Loan Manager, open banking and valuation providers.
+AI and control boundary
+Product matching, scenario preparation, missing-information checks and lender pack drafting. Advice and submission remain controlled.
+Reports and evidence
+Pipeline, conversion, approvals, turnaround, settlements, lender performance and brokerage.
+Minimum release acceptance
+Role and tenant permissions enforced server-side.
+Primary workflow works end to end with persistent data.
+Audit events record creation, approval, change and completion.
+Empty, loading, error and mobile states are complete.
+Critical calculations and transitions have automated tests.
+Cross-module links use shared IDs and do not duplicate source records.
+MODULE 21
+EnTIQ Loan Manager
+Administer facilities after settlement, including payments, conditions, arrears, draws and investor reporting.
+Primary users: Loan administrator, lender, fund manager, borrower, credit officer and investor
+Commercial model: Per active facility and administration user.
+Source assets: Original PFA loan book, ledger, draw, arrears and reusable recovery/receivership assets.
+Experience and screens
+Loan book
+Facility and borrower detail
+Loan ledger
+Repayments and interest
+Conditions and covenants
+Construction draws
+Arrears and hardship
+Insurance and tax tracking
+Payout and discharge
+Investor and management reports
+Core workflow
+Board settled facility > set schedule/rates/fees > post and reconcile transactions > monitor conditions > manage draws > issue statements > handle arrears/workouts > process variations > payout/discharge > archive.
+Data ownership
+Facility, tranche, security, rate period, fee, transaction, repayment schedule, condition, covenant, draw, arrears stage, workout plan, statement, payout and discharge.
+Connections
+Lending, Capital, Funds, Billing, Settle, Documents, bank feeds and payment services.
+AI and control boundary
+Reconciliation suggestions, condition monitoring, arrears prioritisation and forecast summaries. No autonomous funds movement, rate change or enforcement decision.
+Reports and evidence
+Loan ledger, statements, arrears, conditions, draws, exposure, payout and portfolio performance.
+Minimum release acceptance
+Role and tenant permissions enforced server-side.
+Primary workflow works end to end with persistent data.
+Audit events record creation, approval, change and completion.
+Empty, loading, error and mobile states are complete.
+Critical calculations and transitions have automated tests.
+Cross-module links use shared IDs and do not duplicate source records.
+MODULE 22
+EnTIQ Funds
+Manage investor onboarding, allocations, closes, holdings, exposure and fund reporting.
+Primary users: Fund manager, investor relations, compliance, administrator, investment committee and investor
+Commercial model: Per fund, investor and assets-under-administration tier.
+Source assets: Original IMFO/fund concepts and grow-capital-plateform.
+Experience and screens
+Fund dashboard
+Investor onboarding
+Investor registry
+Opportunities and deal rooms
+Commitments and allocations
+Rolling closes
+Holdings and exposure
+Distributions and capital calls
+Quarterly reporting
+Audit packs
+Core workflow
+Create fund/mandate > verify investor > collect subscription > approve eligibility > record commitment > allocate deal > close > track holding/cash flows > report > distribute > maintain audit evidence.
+Data ownership
+Fund, mandate, investor, eligibility, commitment, allocation, close, holding, capital call, distribution, NAV, exposure and report.
+Connections
+Verify, Sign, Capital, Documents, Requests, Billing, Loan Manager and accounting systems.
+AI and control boundary
+Investor-document checks, allocation support, concentration alerts and report drafting. Committee approvals and allocations remain controlled.
+Reports and evidence
+Registry, commitments, allocations, exposure, performance, distributions, quarterly packs and audit evidence.
+Minimum release acceptance
+Role and tenant permissions enforced server-side.
+Primary workflow works end to end with persistent data.
+Audit events record creation, approval, change and completion.
+Empty, loading, error and mobile states are complete.
+Critical calculations and transitions have automated tests.
+Cross-module links use shared IDs and do not duplicate source records.
+MODULE 23
+EnTIQ Trust
+Maintain trust structures, registers, decisions, compliance and recurring administration.
+Primary users: Accountant, lawyer, trustee, administrator, beneficiary contact and reviewer
+Commercial model: Per active trust and professional user.
+Source assets: Original Apex Trust concepts and accounting trust modules.
+Experience and screens
+Trust dashboard
+Structure and parties
+Deed and variation register
+Trustee and appointor history
+Beneficiary and unit register
+Resolutions and minutes
+Distributions
+Compliance calendar
+Documents
+Reports and audit history
+Core workflow
+Create trust record > capture deed/parties > verify structure > maintain changes/registers > prepare resolutions > approve/sign > record distributions > complete recurring compliance > archive evidence.
+Data ownership
+Trust, type, deed, variation, trustee, appointor, beneficiary, unit holding, resolution, distribution, meeting, obligation and register event.
+Connections
+Verify, Sign, Documents, Practice, Workpapers, Billing and Client.
+AI and control boundary
+Deed metadata extraction, structure checks, recurring requirement detection and draft resolutions from approved templates. Legal/tax approval remains human.
+Reports and evidence
+Structure report, registers, resolution pack, distribution history, compliance calendar and audit trail.
+Minimum release acceptance
+Role and tenant permissions enforced server-side.
+Primary workflow works end to end with persistent data.
+Audit events record creation, approval, change and completion.
+Empty, loading, error and mobile states are complete.
+Critical calculations and transitions have automated tests.
+Cross-module links use shared IDs and do not duplicate source records.
+MODULE 24
+EnTIQ Associations
+Run memberships, governance, committees, meetings, finances and compliance for incorporated associations.
+Primary users: Committee member, administrator, treasurer, secretary, member, accountant and auditor
+Commercial model: Per association and administrator seat.
+Source assets: Original QLD Association concept and shared platform services.
+Experience and screens
+Association dashboard
+Member register
+Committee and offices
+Meetings and agenda
+Minutes and resolutions
+Conflicts and declarations
+Policies and registers
+Finance and budgets
+Tasks and compliance calendar
+Member portal and reports
+Core workflow
+Set up association > import members > manage committee roles > schedule meeting > distribute agenda > capture minutes/decisions > assign actions > manage declarations/registers > monitor compliance > report to members/regulators.
+Data ownership
+Association, member, membership, committee role, meeting, agenda, attendance, minute, resolution, conflict, declaration, policy, obligation and filing.
+Connections
+Sign, Verify, Documents, Billing, Client, Academy and accounting systems.
+AI and control boundary
+Agenda and minutes drafts, action extraction, register checks and compliance reminders. Formal resolutions require approval.
+Reports and evidence
+Member and committee registers, minutes, decisions, conflicts, compliance status, financial summaries and AGM pack.
+Minimum release acceptance
+Role and tenant permissions enforced server-side.
+Primary workflow works end to end with persistent data.
+Audit events record creation, approval, change and completion.
+Empty, loading, error and mobile states are complete.
+Critical calculations and transitions have automated tests.
+Cross-module links use shared IDs and do not duplicate source records.
+6. Cross-module ownership rules
+Record
+System of record
+Consumers
+Platform practice index and product catalogue
+EnTIQ Control Centre
+Practice HQ and platform services
+Practice configuration and user access
+EnTIQ Practice HQ
+All modules enabled for that practice
+Tenant and entitlements
+EnTIQ Control Centre and Practice HQ
+All modules
+Party and relationship
+Shared party/entity graph
+All modules
+Identity and AML/CTF decision
+EnTIQ Verify
+Start, Credit, Lending, Capital, Funds, Client
+Original document and hash
+EnTIQ Documents
+All modules
+External request
+EnTIQ Requests
+Start, Verify, Credit, Lending, Practice
+Signature evidence
+EnTIQ Sign
+Start, Settle, Academy, Trust, Associations
+Client-facing access
+EnTIQ Client
+All subscribed modules
+Workpaper and sign-off
+EnTIQ Workpapers
+Practice, Advisory, Client
+Subscription and invoice
+EnTIQ Billing
+Practice HQ and all billable modules
+Facility ledger
+EnTIQ Loan Manager
+Lending, Capital, Funds, Client
+7. Delivery sequence
+Platform administration: Control Centre, Practice HQ, tenant lifecycle, module catalogue, subscriptions, integrations, users and permission matrix.
+Foundation: Identity/access, party/entity graph, documents, workflow, audit, entitlements and billing.
+Entry suite: Start, Verify, Sign, Requests and Client.
+Accounting suite: Practice, Workpapers and Advisory.
+Finance suite: Credit, Lending, Capital, Loan Manager, Funds and Settle.
+Growth suite: CRM, Marketing, Projects and advanced Billing.
+Assurance and administration: Academy, Trust and Associations.
+8. Definition of done for every module
+Product owner and source repository recorded.
+Screens and user flows approved.
+OpenAPI and event contracts published.
+Data ownership and migration agreed.
+Permissions and tenant-isolation tests passed.
+Security and privacy review passed.
+Unit, integration and end-to-end tests passed.
+Monitoring, support and rollback runbooks complete.
+Subscription entitlements and usage metering working.
+Customer documentation and staff training complete.

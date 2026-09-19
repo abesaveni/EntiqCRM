@@ -1,0 +1,876 @@
+<title>Entiq CRM Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --paper:#EEF1EA; --surface:#FAFBF7;
+    --ink:#161B16; --muted:#5D6A5F;
+    --rule:#CCD5C7; --rule-soft:#DDE3D8;
+    --entry:#1B4D36; --entry-soft:#E2EBE2;
+    --red:#8C3122; --red-soft:#F3E3DF;
+    --amber:#8A6410; --amber-soft:#F0E8D6;
+    --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+    --serif:"Spectral",Georgia,"Times New Roman",serif;
+    --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#12150F; --surface:#191D16;
+      --ink:#E7ECE4; --muted:#9AA795;
+      --rule:#2F3629; --rule-soft:#242A1F;
+      --entry:#86C4A0; --entry-soft:#1C2B21;
+      --red:#E29385; --red-soft:#2F201C;
+      --amber:#D4AC62; --amber-soft:#2B2416;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#12150F; --surface:#191D16;
+    --ink:#E7ECE4; --muted:#9AA795;
+    --rule:#2F3629; --rule-soft:#242A1F;
+    --entry:#86C4A0; --entry-soft:#1C2B21;
+    --red:#E29385; --red-soft:#2F201C;
+    --amber:#D4AC62; --amber-soft:#2B2416;
+  }
+  body{background:var(--paper); color:var(--ink); font-family:var(--sans); font-size:15.5px; line-height:1.62; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1020px; margin:0 auto; padding-inline:20px; padding-block:48px 72px;}
+  .eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin:0 0 14px;}
+  h1{font-family:var(--serif); font-weight:600; font-size:clamp(34px,6vw,52px); line-height:1.08; margin:0 0 18px; text-wrap:balance; letter-spacing:-.015em;}
+  .standfirst{font-family:var(--serif); font-size:clamp(17px,2.4vw,20px); line-height:1.5; margin:0; max-width:64ch;}
+  .standfirst strong{color:var(--entry); font-weight:600;}
+  .figures{display:grid; grid-template-columns:repeat(auto-fit,minmax(112px,1fr)); gap:0; margin:38px 0 0; border-top:1px solid var(--rule); border-bottom:1px solid var(--rule);}
+  .fig{padding:16px 14px 15px; border-right:1px solid var(--rule-soft);}
+  .fig:last-child{border-right:0;}
+  .fig b{display:block; font-family:var(--mono); font-weight:500; font-size:22px; font-variant-numeric:tabular-nums; letter-spacing:-.02em;}
+  .fig span{display:block; font-size:11.5px; color:var(--muted); margin-top:3px; line-height:1.35;}
+  section{margin-top:56px;}
+  .shead{display:flex; gap:14px; align-items:baseline; margin-bottom:6px;}
+  .snum{font-family:var(--mono); font-size:11px; color:var(--entry); letter-spacing:.1em; flex:none; padding-top:5px;}
+  h2{font-family:var(--serif); font-weight:600; font-size:clamp(23px,3.4vw,30px); line-height:1.2; margin:0; letter-spacing:-.01em; text-wrap:balance;}
+  h3{font-family:var(--sans); font-weight:600; font-size:15px; margin:30px 0 8px;}
+  p{margin:0 0 15px; max-width:70ch;}
+  .lede{color:var(--muted); max-width:70ch; margin:0 0 20px;}
+  ul{margin:0 0 15px; padding-left:19px; max-width:70ch;} li{margin-bottom:7px;}
+  code{font-family:var(--mono); font-size:.87em; background:var(--surface); border:1px solid var(--rule-soft); border-radius:3px; padding:1px 5px;}
+  hr{border:0; border-top:1px solid var(--rule); margin:52px 0 0;}
+  figure{margin:30px 0 8px;}
+  .scroll{overflow-x:auto; border:1px solid var(--rule); background:var(--surface); border-radius:2px;}
+  .scroll svg{display:block; min-width:700px; width:100%; height:auto;}
+  figcaption{font-size:13px; color:var(--muted); margin-top:11px; max-width:74ch; line-height:1.55;}
+  figcaption b{color:var(--ink); font-weight:600;}
+  .tscroll{overflow-x:auto; margin:22px 0 10px;}
+  table{border-collapse:collapse; width:100%; min-width:560px; font-size:14px;}
+  th,td{text-align:left; padding:9px 14px 9px 0; border-bottom:1px solid var(--rule-soft); vertical-align:top;}
+  th{font-family:var(--mono); font-weight:500; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--rule); white-space:nowrap;}
+  td:first-child{font-weight:500; padding-right:20px;}
+  .mono{font-family:var(--mono); font-size:12.5px;}
+  .ok{color:var(--entry); font-weight:600;} .bad{color:var(--red); font-weight:600;} .warn{color:var(--amber); font-weight:600;}
+  .note{border-left:2px solid var(--entry); padding:2px 0 2px 18px; margin:24px 0; max-width:70ch;}
+  .note.alert{border-left-color:var(--red);}
+  .note p:last-child{margin-bottom:0;}
+  .note .tag{font-family:var(--mono); font-size:10.5px; letter-spacing:.11em; text-transform:uppercase; color:var(--entry); display:block; margin-bottom:5px;}
+  .note.alert .tag{color:var(--red);}
+  .phase{display:grid; grid-template-columns:52px 1fr; gap:0 18px; padding:17px 0; border-bottom:1px solid var(--rule-soft);}
+  .phase:first-of-type{border-top:1px solid var(--rule);}
+  .pnum{font-family:var(--mono); font-size:11px; color:var(--entry); letter-spacing:.08em; padding-top:3px;}
+  .ptitle{font-weight:600; font-size:15.5px; margin:0 0 4px;}
+  .pbody{margin:0; color:var(--muted); font-size:14px; max-width:66ch;}
+  .pbody em{color:var(--ink); font-style:normal; font-weight:500;}
+  .tree{font-family:var(--mono); font-size:12.5px; line-height:1.72; background:var(--surface); border:1px solid var(--rule); border-radius:2px; padding:20px 22px; overflow-x:auto; margin:22px 0; white-space:pre;}
+  .tree b{color:var(--entry); font-weight:500;}
+  .tree i{color:var(--muted); font-style:normal;}
+  footer{margin-top:54px; padding-top:20px; border-top:1px solid var(--rule); font-size:12.5px; color:var(--muted); font-family:var(--mono);}
+  @media (max-width:560px){ .phase{grid-template-columns:1fr; gap:4px;} }
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">Entiq platform · architecture decision · revision 2</p>
+  <h1>Entiq CRM Architecture</h1>
+  <p class="standfirst">Nine products, built separately, become <strong>one subscription: a $99/month CRM with modules sold on top</strong> — one codebase, one login, one client record, and everything repeated across modules extracted once into shared packages.</p>
+
+  <div class="figures">
+    <div class="fig"><b>457</b><span>tables across 9 repos</span></div>
+    <div class="fig"><b>47</b><span>duplicated by name</span></div>
+    <div class="fig"><b>43</b><span>byte-identical UI files</span></div>
+    <div class="fig"><b>18</b><span>shared packages</span></div>
+    <div class="fig"><b>9</b><span>modules remaining</span></div>
+  </div>
+
+  <!-- 01 -->
+  <section>
+    <div class="shead"><span class="snum">01</span><h2>What is actually repeated</h2></div>
+    <p class="lede">Measured, not assumed — every table name in every repo, intersected; every capability grep'd across all eight backends.</p>
+
+    <figure>
+      <div class="scroll">
+        <svg viewBox="0 0 900 600" role="img" aria-label="Duplication grid. Sixteen capabilities listed down the left, eight systems across the top. A filled dot means the system has its own implementation of that capability. Rate limiting, reporting, users and identity appear in all eight. Notifications, audit logging, document upload, API keys, email and activity timelines appear in seven. Xero and AML each appear twice, e-signature three times.">
+          <defs><style>.cap{font-family:"IBM Plex Sans";font-size:12.5px}.hd{font-family:"IBM Plex Mono";font-size:10px;letter-spacing:.06em}.ct{font-family:"IBM Plex Mono";font-size:11px}</style></defs>
+          <text x="20" y="30" class="hd" fill="var(--muted)">CAPABILITY</text>
+          <text x="284" y="30" class="hd" fill="var(--muted)" text-anchor="middle">KYC</text>
+          <text x="352" y="30" class="hd" fill="var(--muted)" text-anchor="middle">ACC</text>
+          <text x="420" y="30" class="hd" fill="var(--muted)" text-anchor="middle">PRT</text>
+          <text x="488" y="30" class="hd" fill="var(--muted)" text-anchor="middle">ESG</text>
+          <text x="556" y="30" class="hd" fill="var(--muted)" text-anchor="middle">SRT</text>
+          <text x="624" y="30" class="hd" fill="var(--muted)" text-anchor="middle">TRN</text>
+          <text x="692" y="30" class="hd" fill="var(--muted)" text-anchor="middle">SUP</text>
+          <text x="760" y="30" class="hd" fill="var(--muted)" text-anchor="middle">RIQ</text>
+          <text x="850" y="30" class="hd" fill="var(--muted)" text-anchor="middle">×</text>
+          <line x1="20" y1="40" x2="880" y2="40" stroke="var(--rule)" stroke-width="1"/>
+
+          <g id="rows">
+            <!-- row template: y = 68 + i*33 -->
+            <text x="20" y="72" class="cap" fill="var(--ink)">Users / identity</text>
+            <circle cx="284" cy="68" r="5" fill="var(--red)"/><circle cx="352" cy="68" r="5" fill="var(--red)"/><circle cx="420" cy="68" r="5" fill="var(--red)"/><circle cx="488" cy="68" r="5" fill="var(--red)"/><circle cx="556" cy="68" r="5" fill="var(--red)"/><circle cx="624" cy="68" r="5" fill="var(--red)"/><circle cx="692" cy="68" r="5" fill="var(--red)"/><circle cx="760" cy="68" r="5" fill="var(--red)"/>
+            <text x="850" y="72" class="ct" fill="var(--red)" text-anchor="middle">8</text>
+
+            <text x="20" y="105" class="cap" fill="var(--ink)">Rate limiting</text>
+            <circle cx="284" cy="101" r="5" fill="var(--red)"/><circle cx="352" cy="101" r="5" fill="var(--red)"/><circle cx="420" cy="101" r="5" fill="var(--red)"/><circle cx="488" cy="101" r="5" fill="var(--red)"/><circle cx="556" cy="101" r="5" fill="var(--red)"/><circle cx="624" cy="101" r="5" fill="var(--red)"/><circle cx="692" cy="101" r="5" fill="var(--red)"/><circle cx="760" cy="101" r="5" fill="var(--red)"/>
+            <text x="850" y="105" class="ct" fill="var(--red)" text-anchor="middle">8</text>
+
+            <text x="20" y="138" class="cap" fill="var(--ink)">Reports / analytics</text>
+            <circle cx="284" cy="134" r="5" fill="var(--red)"/><circle cx="352" cy="134" r="5" fill="var(--red)"/><circle cx="420" cy="134" r="5" fill="var(--red)"/><circle cx="488" cy="134" r="5" fill="var(--red)"/><circle cx="556" cy="134" r="5" fill="var(--red)"/><circle cx="624" cy="134" r="5" fill="var(--red)"/><circle cx="692" cy="134" r="5" fill="var(--red)"/><circle cx="760" cy="134" r="5" fill="var(--red)"/>
+            <text x="850" y="138" class="ct" fill="var(--red)" text-anchor="middle">8</text>
+
+            <text x="20" y="171" class="cap" fill="var(--ink)">Notifications</text>
+            <circle cx="284" cy="167" r="5" fill="var(--red)"/><circle cx="352" cy="167" r="5" fill="var(--red)"/><circle cx="420" cy="167" r="5" fill="var(--red)"/><circle cx="488" cy="167" r="5" fill="var(--red)"/><circle cx="556" cy="167" r="4" fill="none" stroke="var(--rule)"/><circle cx="624" cy="167" r="5" fill="var(--red)"/><circle cx="692" cy="167" r="5" fill="var(--red)"/><circle cx="760" cy="167" r="5" fill="var(--red)"/>
+            <text x="850" y="171" class="ct" fill="var(--red)" text-anchor="middle">7</text>
+
+            <text x="20" y="204" class="cap" fill="var(--ink)">Audit log</text>
+            <circle cx="284" cy="200" r="5" fill="var(--red)"/><circle cx="352" cy="200" r="5" fill="var(--red)"/><circle cx="420" cy="200" r="5" fill="var(--red)"/><circle cx="488" cy="200" r="5" fill="var(--red)"/><circle cx="556" cy="200" r="4" fill="none" stroke="var(--rule)"/><circle cx="624" cy="200" r="5" fill="var(--red)"/><circle cx="692" cy="200" r="5" fill="var(--red)"/><circle cx="760" cy="200" r="5" fill="var(--red)"/>
+            <text x="850" y="204" class="ct" fill="var(--red)" text-anchor="middle">7</text>
+
+            <text x="20" y="237" class="cap" fill="var(--ink)">Document upload</text>
+            <circle cx="284" cy="233" r="5" fill="var(--red)"/><circle cx="352" cy="233" r="5" fill="var(--red)"/><circle cx="420" cy="233" r="5" fill="var(--red)"/><circle cx="488" cy="233" r="5" fill="var(--red)"/><circle cx="556" cy="233" r="5" fill="var(--red)"/><circle cx="624" cy="233" r="5" fill="var(--red)"/><circle cx="692" cy="233" r="4" fill="none" stroke="var(--rule)"/><circle cx="760" cy="233" r="5" fill="var(--red)"/>
+            <text x="850" y="237" class="ct" fill="var(--red)" text-anchor="middle">7</text>
+
+            <text x="20" y="270" class="cap" fill="var(--ink)">API keys</text>
+            <circle cx="284" cy="266" r="5" fill="var(--red)"/><circle cx="352" cy="266" r="5" fill="var(--red)"/><circle cx="420" cy="266" r="5" fill="var(--red)"/><circle cx="488" cy="266" r="5" fill="var(--red)"/><circle cx="556" cy="266" r="5" fill="var(--red)"/><circle cx="624" cy="266" r="5" fill="var(--red)"/><circle cx="692" cy="266" r="4" fill="none" stroke="var(--rule)"/><circle cx="760" cy="266" r="5" fill="var(--red)"/>
+            <text x="850" y="270" class="ct" fill="var(--red)" text-anchor="middle">7</text>
+
+            <text x="20" y="303" class="cap" fill="var(--ink)">Email / SMTP</text>
+            <circle cx="284" cy="299" r="5" fill="var(--red)"/><circle cx="352" cy="299" r="5" fill="var(--red)"/><circle cx="420" cy="299" r="5" fill="var(--red)"/><circle cx="488" cy="299" r="5" fill="var(--red)"/><circle cx="556" cy="299" r="5" fill="var(--red)"/><circle cx="624" cy="299" r="5" fill="var(--red)"/><circle cx="692" cy="299" r="5" fill="var(--red)"/><circle cx="760" cy="299" r="4" fill="none" stroke="var(--rule)"/>
+            <text x="850" y="303" class="ct" fill="var(--red)" text-anchor="middle">7</text>
+
+            <text x="20" y="336" class="cap" fill="var(--ink)">Activity timeline</text>
+            <circle cx="284" cy="332" r="5" fill="var(--red)"/><circle cx="352" cy="332" r="5" fill="var(--red)"/><circle cx="420" cy="332" r="5" fill="var(--red)"/><circle cx="488" cy="332" r="5" fill="var(--red)"/><circle cx="556" cy="332" r="5" fill="var(--red)"/><circle cx="624" cy="332" r="5" fill="var(--red)"/><circle cx="692" cy="332" r="5" fill="var(--red)"/><circle cx="760" cy="332" r="4" fill="none" stroke="var(--rule)"/>
+            <text x="850" y="336" class="ct" fill="var(--red)" text-anchor="middle">7</text>
+
+            <text x="20" y="369" class="cap" fill="var(--ink)">File storage S3 / Azure</text>
+            <circle cx="284" cy="365" r="5" fill="var(--red)"/><circle cx="352" cy="365" r="5" fill="var(--red)"/><circle cx="420" cy="365" r="5" fill="var(--red)"/><circle cx="488" cy="365" r="5" fill="var(--red)"/><circle cx="556" cy="365" r="4" fill="none" stroke="var(--rule)"/><circle cx="624" cy="365" r="5" fill="var(--red)"/><circle cx="692" cy="365" r="4" fill="none" stroke="var(--rule)"/><circle cx="760" cy="365" r="5" fill="var(--red)"/>
+            <text x="850" y="369" class="ct" fill="var(--red)" text-anchor="middle">6</text>
+
+            <text x="20" y="402" class="cap" fill="var(--ink)">Webhooks</text>
+            <circle cx="284" cy="398" r="5" fill="var(--red)"/><circle cx="352" cy="398" r="5" fill="var(--red)"/><circle cx="420" cy="398" r="5" fill="var(--red)"/><circle cx="488" cy="398" r="5" fill="var(--red)"/><circle cx="556" cy="398" r="5" fill="var(--red)"/><circle cx="624" cy="398" r="5" fill="var(--red)"/><circle cx="692" cy="398" r="4" fill="none" stroke="var(--rule)"/><circle cx="760" cy="398" r="4" fill="none" stroke="var(--rule)"/>
+            <text x="850" y="402" class="ct" fill="var(--red)" text-anchor="middle">6</text>
+
+            <text x="20" y="435" class="cap" fill="var(--ink)">Workflow engine</text>
+            <circle cx="284" cy="431" r="5" fill="var(--red)"/><circle cx="352" cy="431" r="5" fill="var(--red)"/><circle cx="420" cy="431" r="5" fill="var(--red)"/><circle cx="488" cy="431" r="5" fill="var(--red)"/><circle cx="556" cy="431" r="5" fill="var(--red)"/><circle cx="624" cy="431" r="4" fill="none" stroke="var(--rule)"/><circle cx="692" cy="431" r="4" fill="none" stroke="var(--rule)"/><circle cx="760" cy="431" r="4" fill="none" stroke="var(--rule)"/>
+            <text x="850" y="435" class="ct" fill="var(--red)" text-anchor="middle">5</text>
+
+            <text x="20" y="468" class="cap" fill="var(--ink)">AI / LLM runtime</text>
+            <circle cx="284" cy="464" r="5" fill="var(--red)"/><circle cx="352" cy="464" r="5" fill="var(--red)"/><circle cx="420" cy="464" r="5" fill="var(--red)"/><circle cx="488" cy="464" r="5" fill="var(--red)"/><circle cx="556" cy="464" r="4" fill="none" stroke="var(--rule)"/><circle cx="624" cy="464" r="5" fill="var(--red)"/><circle cx="692" cy="464" r="4" fill="none" stroke="var(--rule)"/><circle cx="760" cy="464" r="5" fill="var(--red)"/>
+            <text x="850" y="468" class="ct" fill="var(--red)" text-anchor="middle">6</text>
+
+            <text x="20" y="501" class="cap" fill="var(--ink)">shadcn / Radix UI kit</text>
+            <circle cx="284" cy="497" r="5" fill="var(--red)"/><circle cx="352" cy="497" r="4" fill="none" stroke="var(--rule)"/><circle cx="420" cy="497" r="5" fill="var(--red)"/><circle cx="488" cy="497" r="5" fill="var(--red)"/><circle cx="556" cy="497" r="5" fill="var(--red)"/><circle cx="624" cy="497" r="4" fill="none" stroke="var(--rule)"/><circle cx="692" cy="497" r="4" fill="none" stroke="var(--rule)"/><circle cx="760" cy="497" r="4" fill="none" stroke="var(--rule)"/>
+            <text x="850" y="501" class="ct" fill="var(--red)" text-anchor="middle">4</text>
+
+            <text x="20" y="534" class="cap" fill="var(--ink)">E-signature</text>
+            <circle cx="284" cy="530" r="4" fill="none" stroke="var(--rule)"/><circle cx="352" cy="530" r="5" fill="var(--amber)"/><circle cx="420" cy="530" r="5" fill="var(--amber)"/><circle cx="488" cy="530" r="6" fill="var(--entry)"/><circle cx="556" cy="530" r="4" fill="none" stroke="var(--rule)"/><circle cx="624" cy="530" r="4" fill="none" stroke="var(--rule)"/><circle cx="692" cy="530" r="4" fill="none" stroke="var(--rule)"/><circle cx="760" cy="530" r="4" fill="none" stroke="var(--rule)"/>
+            <text x="850" y="534" class="ct" fill="var(--amber)" text-anchor="middle">3</text>
+
+            <text x="20" y="567" class="cap" fill="var(--ink)">Xero ledger sync</text>
+            <circle cx="284" cy="563" r="4" fill="none" stroke="var(--rule)"/><circle cx="352" cy="563" r="6" fill="var(--entry)"/><circle cx="420" cy="563" r="5" fill="var(--amber)"/><circle cx="488" cy="563" r="4" fill="none" stroke="var(--rule)"/><circle cx="556" cy="563" r="4" fill="none" stroke="var(--rule)"/><circle cx="624" cy="563" r="4" fill="none" stroke="var(--rule)"/><circle cx="692" cy="563" r="4" fill="none" stroke="var(--rule)"/><circle cx="760" cy="563" r="4" fill="none" stroke="var(--rule)"/>
+            <text x="850" y="567" class="ct" fill="var(--amber)" text-anchor="middle">2</text>
+
+            <text x="20" y="592" class="cap" fill="var(--ink)">AML / screening</text>
+            <circle cx="284" cy="588" r="6" fill="var(--entry)"/><circle cx="352" cy="588" r="4" fill="none" stroke="var(--rule)"/><circle cx="420" cy="588" r="5" fill="var(--amber)"/><circle cx="488" cy="588" r="4" fill="none" stroke="var(--rule)"/><circle cx="556" cy="588" r="4" fill="none" stroke="var(--rule)"/><circle cx="624" cy="588" r="4" fill="none" stroke="var(--rule)"/><circle cx="692" cy="588" r="4" fill="none" stroke="var(--rule)"/><circle cx="760" cy="588" r="4" fill="none" stroke="var(--rule)"/>
+            <text x="850" y="592" class="ct" fill="var(--amber)" text-anchor="middle">2</text>
+          </g>
+        </svg>
+      </div>
+      <figcaption><b>Every filled dot is code written more than once.</b> KYC · ACC accounting · PRT client portal · ESG e-sign · SRT start · TRN training · SUP support · RIQ lending. Large green dots mark the implementation worth keeping; amber marks a duplicate to retire. The top nine rows are pure infrastructure — nothing about them is domain-specific, and they account for most of the repetition.</figcaption>
+    </figure>
+
+    <h3>The sharpest evidence</h3>
+    <ul>
+      <li><strong>43 of 46</strong> shadcn UI components are <em>byte-identical</em> between EntiqStart and Client Portal — the same files, copied.</li>
+      <li><strong>Six</strong> separate <code>users</code> tables; five <code>notifications</code>; four <code>audit_logs</code>; three each of <code>roles</code>, <code>templates</code>, <code>invitations</code>, <code>entities</code>, <code>document_requests</code>, <code>revoked_tokens</code>.</li>
+      <li>Client Portal carries a <strong>37-file second AML engine</strong> — its own orchestrator, OpenSanctions PEP, DFAT sanctions, ASIC screen, adverse media, country risk, source of funds, and its own Postgres store.</li>
+    </ul>
+
+    <div class="note alert">
+      <span class="tag">Corrections from this pass</span>
+      <p><strong>GrowKyc has no e-signature capability.</strong> Its ~500 "signature" matches are webhook HMAC verification, not signing. <strong>E-Sign's Xero integration is an empty stub</strong> — one comment line; only its BAS (492 lines) and Client Portal (548 lines) adapters are real.</p>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- 02 -->
+  <section>
+    <div class="shead"><span class="snum">02</span><h2>One codebase, three tiers</h2></div>
+    <p class="lede">Packages know nothing about modules. Modules depend on packages and on the core. Apps depend on modules. Dependencies point one way only.</p>
+
+    <figure>
+      <div class="scroll">
+        <svg viewBox="0 0 960 470" role="img" aria-label="Three-tier monorepo. At the top, two apps: the Entiq web shell and the Flutter mobile app. In the middle, nine modules: KYC and AML, Accounting, Client Portal, Start, E-Sign, Training, Support, Lending and Billing, sitting on the CRM Core which holds customers, entities, contacts and the timeline. At the bottom, eighteen shared packages grouped into platform, data and interface layers. Arrows point downward only: apps depend on modules, modules depend on core and packages, packages depend on nothing.">
+          <defs>
+            <marker id="d1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker>
+          </defs>
+          <text x="20" y="26" font-family="IBM Plex Mono" font-size="10" letter-spacing="1" fill="var(--muted)">APPS</text>
+          <rect x="250" y="34" width="210" height="48" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.5"/>
+          <text x="355" y="63" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="var(--ink)">Entiq Web Shell</text>
+          <rect x="500" y="34" width="210" height="48" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.5"/>
+          <text x="605" y="63" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="var(--ink)">entiq-app (Flutter)</text>
+          <line x1="480" y1="82" x2="480" y2="106" stroke="var(--muted)" stroke-width="1.4" marker-end="url(#d1)"/>
+
+          <text x="20" y="128" font-family="IBM Plex Mono" font-size="10" letter-spacing="1" fill="var(--muted)">MODULES</text>
+          <g font-family="IBM Plex Sans" font-size="11.5" font-weight="600" fill="var(--ink)" text-anchor="middle">
+            <rect x="20" y="112" width="100" height="44" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.4"/><text x="70" y="139">KYC / AML</text>
+            <rect x="128" y="112" width="100" height="44" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.4"/><text x="178" y="139">Accounting</text>
+            <rect x="236" y="112" width="100" height="44" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.4"/><text x="286" y="134">Client</text><text x="286" y="148">Portal</text>
+            <rect x="344" y="112" width="100" height="44" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.4"/><text x="394" y="139">Start</text>
+            <rect x="452" y="112" width="100" height="44" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.4"/><text x="502" y="139">E-Sign</text>
+            <rect x="560" y="112" width="100" height="44" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.4"/><text x="610" y="139">Training</text>
+            <rect x="668" y="112" width="100" height="44" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.4"/><text x="718" y="139">Support</text>
+            <rect x="776" y="112" width="80" height="44" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.4"/><text x="816" y="139">Lending</text>
+            <rect x="864" y="112" width="76" height="44" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.4"/><text x="902" y="139">Billing</text>
+          </g>
+          <line x1="480" y1="156" x2="480" y2="180" stroke="var(--muted)" stroke-width="1.4" marker-end="url(#d1)"/>
+
+          <text x="20" y="202" font-family="IBM Plex Mono" font-size="10" letter-spacing="1" fill="var(--muted)">CORE</text>
+          <rect x="120" y="186" width="720" height="64" rx="2" fill="var(--entry-soft)" stroke="var(--entry)" stroke-width="2.2"/>
+          <text x="480" y="213" text-anchor="middle" font-family="Spectral" font-size="18" font-weight="600" fill="var(--ink)">Entiq CRM Core</text>
+          <text x="480" y="234" text-anchor="middle" font-family="IBM Plex Sans" font-size="11.5" fill="var(--ink)">customer · entity · contact · relationship · activity timeline · pipeline</text>
+          <line x1="480" y1="250" x2="480" y2="274" stroke="var(--muted)" stroke-width="1.4" marker-end="url(#d1)"/>
+
+          <text x="20" y="296" font-family="IBM Plex Mono" font-size="10" letter-spacing="1" fill="var(--muted)">PACKAGES</text>
+          <rect x="20" y="282" width="920" height="168" rx="2" fill="none" stroke="var(--entry)" stroke-width="1.4" stroke-dasharray="4 4"/>
+          <text x="36" y="306" font-family="IBM Plex Mono" font-size="9.5" letter-spacing=".8" fill="var(--muted)">PLATFORM</text>
+          <g font-family="IBM Plex Mono" font-size="11" fill="var(--ink)" text-anchor="middle">
+            <rect x="36" y="314" width="126" height="30" rx="2" fill="var(--entry-soft)" stroke="var(--entry)" stroke-width="1.2"/><text x="99" y="334">identity</text>
+            <rect x="170" y="314" width="126" height="30" rx="2" fill="var(--entry-soft)" stroke="var(--entry)" stroke-width="1.2"/><text x="233" y="334">tenancy</text>
+            <rect x="304" y="314" width="126" height="30" rx="2" fill="var(--entry-soft)" stroke="var(--entry)" stroke-width="1.2"/><text x="367" y="334">rbac</text>
+            <rect x="438" y="314" width="126" height="30" rx="2" fill="var(--entry-soft)" stroke="var(--entry)" stroke-width="1.2"/><text x="501" y="334">audit</text>
+            <rect x="572" y="314" width="126" height="30" rx="2" fill="var(--entry-soft)" stroke="var(--entry)" stroke-width="1.2"/><text x="635" y="334">events</text>
+            <rect x="706" y="314" width="126" height="30" rx="2" fill="var(--entry-soft)" stroke="var(--entry)" stroke-width="1.2"/><text x="769" y="334">ratelimit</text>
+            <rect x="840" y="314" width="86" height="30" rx="2" fill="var(--entry-soft)" stroke="var(--entry)" stroke-width="1.2"/><text x="883" y="334">apikeys</text>
+          </g>
+          <text x="36" y="366" font-family="IBM Plex Mono" font-size="9.5" letter-spacing=".8" fill="var(--muted)">DATA &amp; DELIVERY</text>
+          <g font-family="IBM Plex Mono" font-size="11" fill="var(--ink)" text-anchor="middle">
+            <rect x="36" y="374" width="126" height="30" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.2"/><text x="99" y="394">storage</text>
+            <rect x="170" y="374" width="126" height="30" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.2"/><text x="233" y="394">documents</text>
+            <rect x="304" y="374" width="126" height="30" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.2"/><text x="367" y="394">notify</text>
+            <rect x="438" y="374" width="126" height="30" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.2"/><text x="501" y="394">webhooks</text>
+            <rect x="572" y="374" width="126" height="30" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.2"/><text x="635" y="394">workflow</text>
+            <rect x="706" y="374" width="126" height="30" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.2"/><text x="769" y="394">ai</text>
+            <rect x="840" y="374" width="86" height="30" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.2"/><text x="883" y="394">search</text>
+          </g>
+          <text x="36" y="426" font-family="IBM Plex Mono" font-size="9.5" letter-spacing=".8" fill="var(--muted)">INTERFACE</text>
+          <g font-family="IBM Plex Mono" font-size="11" fill="var(--ink)" text-anchor="middle">
+            <rect x="170" y="414" width="126" height="28" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.2"/><text x="233" y="433">ui</text>
+            <rect x="304" y="414" width="126" height="28" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.2"/><text x="367" y="433">pdf</text>
+            <rect x="438" y="414" width="126" height="28" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.2"/><text x="501" y="433">api-client</text>
+            <rect x="572" y="414" width="126" height="28" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.2"/><text x="635" y="433">providers</text>
+          </g>
+        </svg>
+      </div>
+      <figcaption><b>The rule that keeps it maintainable:</b> dependencies point downward only. A package that imports a module, or a module that imports another module directly rather than through the core or a provider interface, is the defect that turns a monorepo back into a tangle. Enforce it in CI, not in review.</figcaption>
+    </figure>
+
+    <div class="tree"><b>entiq/</b>
+  <b>packages/</b>        <i>— no domain logic, no module imports</i>
+    identity/       <i>users · sessions · JWT/OIDC · MFA · OTP · invites · reset   ← from GrowKyc + E-Sign</i>
+    tenancy/        <i>tenant · scoping middleware · fail-closed query filter      ← from GrowKyc</i>
+    rbac/           <i>roles · permissions · policy · authority delegation         ← from E-Sign + RequestIQ</i>
+    audit/          <i>append-only log · hash chain · integrity verify             ← from GrowKyc</i>
+    events/         <i>domain event envelope · signed dispatch · idempotency       ← from EntiqStart</i>
+    ratelimit/      <i>slowapi wrapper · per-principal buckets</i>
+    apikeys/        <i>issue · rotate · revoke · scope                             ← from E-Sign + RequestIQ</i>
+    storage/        <i>local | S3 | Azure Blob driver factory                      ← from GrowKyc</i>
+    documents/      <i>upload · versioning · ClamAV scan · OCR providers           ← from E-Sign + GrowKyc</i>
+    notify/         <i>in-app · email/SMTP · SMS · push · templates                ← from SupportHub + E-Sign</i>
+    webhooks/       <i>HMAC signing · delivery log · retry · dead letter           ← from E-Sign + RequestIQ</i>
+    workflow/       <i>rules engine · runs · steps · SLA timers                    ← from E-Sign + Accounting</i>
+    ai/             <i>LLM client · prompts · agent runtime · governance           ← from GrowAccounting</i>
+    search/         <i>cross-module index</i>
+    pdf/            <i>render · certificates · evidence packs</i>
+    providers/      <i>driver + simulation contract for every vendor               ← from EntiqStart</i>
+    ui/             <i>46 shadcn/Radix components · tokens · charts                ← dedupe of 4 copies</i>
+    api-client/     <i>generated TS + Dart clients</i>
+
+  <b>core/</b>            <i>— the CRM: customer · entity · contact · relationship · timeline · pipeline</i>
+
+  <b>modules/</b>         <i>— own their domain only; never users, tenants or the client record</i>
+    kyc/ aml/ accounting/ portal/ start/ esign/ training/ support/ lending/ billing/
+
+  <b>apps/</b>
+    web/            <i>one React shell, route-scoped per module</i>
+    mobile/         <i>Flutter</i>
+</div>
+  </section>
+
+  <hr>
+
+  <!-- 03 -->
+  <section>
+    <div class="shead"><span class="snum">03</span><h2>How a firm buys it</h2></div>
+    <p class="lede">One registration, one login, then modules are switched on individually. This is the only part of the architecture that does not exist anywhere in the estate today — it has to be built, not moved.</p>
+
+    <figure>
+      <div class="scroll">
+        <svg viewBox="0 0 960 390" role="img" aria-label="Subscription flow. A firm signs up, creating a tenant and an owner user. Email verification activates the tenant on a trial. The firm then opens the module marketplace and subscribes to individual modules, which grants entitlements. Those entitlements are read in three places: the shell navigation decides which modules appear, API middleware gates every module route, and the billing meter charges per module.">
+          <defs>
+            <marker id="s1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker>
+            <marker id="s2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--entry)"/></marker>
+          </defs>
+          <g text-anchor="middle">
+            <rect x="20" y="36" width="160" height="72" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.5"/>
+            <text x="100" y="66" font-family="IBM Plex Sans" font-size="12.5" font-weight="600" fill="var(--ink)">1 · Sign up</text>
+            <text x="100" y="85" font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">firm + owner user</text>
+
+            <rect x="210" y="36" width="160" height="72" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.5"/>
+            <text x="290" y="66" font-family="IBM Plex Sans" font-size="12.5" font-weight="600" fill="var(--ink)">2 · Verify</text>
+            <text x="290" y="85" font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">tenant active · trial</text>
+
+            <rect x="400" y="36" width="160" height="72" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.5"/>
+            <text x="480" y="66" font-family="IBM Plex Sans" font-size="12.5" font-weight="600" fill="var(--ink)">3 · Marketplace</text>
+            <text x="480" y="85" font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">module catalogue</text>
+
+            <rect x="590" y="36" width="160" height="72" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.5"/>
+            <text x="670" y="66" font-family="IBM Plex Sans" font-size="12.5" font-weight="600" fill="var(--ink)">4 · Subscribe</text>
+            <text x="670" y="85" font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">plan · seats · trial</text>
+
+            <rect x="780" y="36" width="160" height="72" rx="2" fill="var(--entry-soft)" stroke="var(--entry)" stroke-width="1.8"/>
+            <text x="860" y="66" font-family="IBM Plex Sans" font-size="12.5" font-weight="600" fill="var(--ink)">5 · Entitled</text>
+            <text x="860" y="85" font-family="IBM Plex Mono" font-size="9.5" fill="var(--entry)">module unlocked</text>
+          </g>
+          <g stroke="var(--ink)" stroke-width="1.5" marker-end="url(#s1)">
+            <line x1="180" y1="72" x2="204" y2="72"/><line x1="370" y1="72" x2="394" y2="72"/>
+            <line x1="560" y1="72" x2="584" y2="72"/><line x1="750" y1="72" x2="774" y2="72"/>
+          </g>
+
+          <polyline points="860,108 860,142 480,142 480,168" fill="none" stroke="var(--entry)" stroke-width="1.6" marker-end="url(#s2)"/>
+
+          <rect x="330" y="172" width="300" height="58" rx="2" fill="var(--entry-soft)" stroke="var(--entry)" stroke-width="2"/>
+          <text x="480" y="197" text-anchor="middle" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="var(--ink)">tenant_subscriptions</text>
+          <text x="480" y="216" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">tenant · module · plan · status · seats · expiry</text>
+
+          <polyline points="480,230 480,254 160,254 160,278" fill="none" stroke="var(--entry)" stroke-width="1.5" marker-end="url(#s2)"/>
+          <line x1="480" y1="230" x2="480" y2="278" stroke="var(--entry)" stroke-width="1.5" marker-end="url(#s2)"/>
+          <polyline points="480,230 480,254 800,254 800,278" fill="none" stroke="var(--entry)" stroke-width="1.5" marker-end="url(#s2)"/>
+
+          <g text-anchor="middle">
+            <rect x="40" y="284" width="240" height="58" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.5"/>
+            <text x="160" y="308" font-family="IBM Plex Sans" font-size="12.5" font-weight="600" fill="var(--ink)">Shell navigation</text>
+            <text x="160" y="327" font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">renders only what is owned</text>
+
+            <rect x="360" y="284" width="240" height="58" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.5"/>
+            <text x="480" y="308" font-family="IBM Plex Sans" font-size="12.5" font-weight="600" fill="var(--ink)">API middleware</text>
+            <text x="480" y="327" font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">require_module() on every route</text>
+
+            <rect x="680" y="284" width="240" height="58" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.5"/>
+            <text x="800" y="308" font-family="IBM Plex Sans" font-size="12.5" font-weight="600" fill="var(--ink)">Billing meter</text>
+            <text x="800" y="327" font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">charges per module</text>
+          </g>
+          <text x="480" y="368" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="var(--muted)">one entitlement record — three enforcement points, never duplicated logic</text>
+        </svg>
+      </div>
+      <figcaption><b>Entitlement is data, not code.</b> A module is never "installed" or "deployed" per customer — every module ships in every build, and a row in <code>tenant_subscriptions</code> decides whether it is reachable. Turning a module on is a database write, which makes trials, upgrades and suspension instant and reversible.</figcaption>
+    </figure>
+
+    <h3>Every module declares itself</h3>
+    <p>The catalogue, the navigation, the permission list and the entitlement checks are all generated from one manifest per module — so adding a tenth module is a file, not a change to the platform.</p>
+
+    <div class="tree">modules/accounting/<b>module.toml</b>
+  key          = <i>"accounting"</i>
+  name         = <i>"Accounting &amp; Tax"</i>
+  sku          = <i>"acc-standard"</i>
+  requires     = <i>["core"]</i>              <b># hard dependency — cannot run without</b>
+  enhances     = <i>["esign", "kyc"]</i>      <b># optional — richer when present, upsell when not</b>
+  provides     = <i>["ledger", "bas"]</i>     <b># capabilities other modules may consume</b>
+  permissions  = <i>["acc:read", "acc:post", "acc:lodge"]</i>
+  nav          = <i>[{ label = "Workpapers", path = "/accounting/workpapers" }]</i>
+
+  <b>[[panels]]</b>                          <b># what it contributes to the FREE client record</b>
+  slot    = <i>"client.360"</i>
+  render  = <i>"AccountingSummary"</i>
+  upsell  = <i>"See ledger balance, open jobs and BAS due dates here"</i>
+
+  <b>[pricing]</b>
+  model   = <i>"per_seat"</i>                 <b># or "metered" — KYC per check, E-Sign per envelope</b>
+  meter   = <i>[]</i>
+</div>
+
+    <h3>The base plan, and what sits on top</h3>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Product</th><th>Price</th><th>Shape</th><th>Includes</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Entiq CRM</strong></td><td class="mono">15-day trial → <strong>$99/mo + GST</strong></td><td>Base subscription · card at signup</td><td>Client record, contacts, entities, relationships, timeline, tasks, notes, pipeline, users, roles</td></tr>
+          <tr><td>Accounting</td><td class="mono">per seat</td><td>Module</td><td>Workpapers, tax engines, Xero, jobs</td></tr>
+          <tr><td>Support</td><td class="mono">per agent</td><td>Module</td><td>Tickets, live chat, email inbox, widget</td></tr>
+          <tr><td>Training</td><td class="mono">per seat</td><td>Module</td><td>Courses, quizzes, certificates, competency</td></tr>
+          <tr><td>KYC / AML</td><td class="mono">per verification</td><td>Module · metered</td><td>Identity, screening, AUSTRAC</td></tr>
+          <tr><td>E-Sign</td><td class="mono">per envelope</td><td>Module · metered</td><td>Agreements, evidence packages</td></tr>
+          <tr><td>Start · Portal · Lending</td><td class="mono">to be set</td><td>Module</td><td>Onboarding · advisory · lending intake</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>The CRM is a subscription like any other — it just happens to be the one that is required. Treat it as module <code>crm</code> in the same <code>tenant_subscriptions</code> table, with no special-case code. A trial is not a separate mechanism either: it is the same row with <code>status = trialing</code> and a <code>trial_ends_at</code>, so expiry is a status transition rather than a second code path. That uniformity means module trials come free later, without new plumbing.</p>
+    <p>The client record is therefore not a fixed page: it is a <strong>composition surface</strong> that paid modules contribute panels to, and the base plan is what every tenant always has.</p>
+
+    <figure>
+      <div class="scroll">
+        <svg viewBox="0 0 960 440" role="img" aria-label="A client record shown as a composition surface. The header and left column — contacts, entities, relationships, timeline, tasks and notes — are free and always present. On the right, four panels are contributed by modules: KYC and AML shows a risk rating, Accounting shows a ledger balance and open jobs, Support shows open tickets, and E-Sign is not subscribed so it renders as an upsell tile instead of data.">
+          <rect x="20" y="28" width="920" height="392" rx="3" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.5"/>
+
+          <rect x="36" y="44" width="888" height="48" rx="2" fill="var(--entry-soft)" stroke="var(--entry)" stroke-width="1.5"/>
+          <text x="52" y="66" font-family="IBM Plex Sans" font-size="14" font-weight="600" fill="var(--ink)">Ashfield Family Trust</text>
+          <text x="52" y="82" font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">ABN 62 114 887 302 · discretionary trust · client since Mar 2026</text>
+          <text x="908" y="74" text-anchor="end" font-family="IBM Plex Mono" font-size="9.5" fill="var(--entry)">CRM CORE · $99/MO</text>
+
+          <rect x="36" y="104" width="300" height="284" rx="2" fill="var(--entry-soft)" stroke="var(--entry)" stroke-width="1.5"/>
+          <text x="52" y="126" font-family="IBM Plex Mono" font-size="9.5" letter-spacing=".7" fill="var(--entry)">ALWAYS PRESENT</text>
+          <g font-family="IBM Plex Sans" font-size="12" fill="var(--ink)">
+            <text x="52" y="154">Contacts · 4</text>
+            <text x="52" y="180">Entities &amp; relationships · 3</text>
+            <text x="52" y="206">Activity timeline</text>
+            <text x="52" y="232">Tasks · 2 open</text>
+            <text x="52" y="258">Notes</text>
+            <text x="52" y="284">Documents</text>
+            <text x="52" y="310">Pipeline stage</text>
+          </g>
+          <line x1="52" y1="330" x2="320" y2="330" stroke="var(--entry)" stroke-width="1" stroke-dasharray="3 3"/>
+          <text x="52" y="352" font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">included in the base plan</text>
+          <text x="52" y="370" font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">15-day trial · then $99/mo</text>
+
+          <text x="352" y="126" font-family="IBM Plex Mono" font-size="9.5" letter-spacing=".7" fill="var(--muted)">CONTRIBUTED BY MODULES</text>
+
+          <rect x="352" y="136" width="278" height="120" rx="2" fill="var(--paper)" stroke="var(--rule)" stroke-width="1.5"/>
+          <text x="368" y="158" font-family="IBM Plex Sans" font-size="12.5" font-weight="600" fill="var(--ink)">KYC / AML</text>
+          <text x="614" y="158" text-anchor="end" font-family="IBM Plex Mono" font-size="9" fill="var(--entry)">SUBSCRIBED</text>
+          <text x="368" y="184" font-family="IBM Plex Sans" font-size="12" fill="var(--ink)">Risk rating · Medium</text>
+          <text x="368" y="206" font-family="IBM Plex Sans" font-size="12" fill="var(--ink)">Verified 12 Aug 2026</text>
+          <text x="368" y="228" font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">2 beneficial owners screened</text>
+
+          <rect x="646" y="136" width="278" height="120" rx="2" fill="var(--paper)" stroke="var(--rule)" stroke-width="1.5"/>
+          <text x="662" y="158" font-family="IBM Plex Sans" font-size="12.5" font-weight="600" fill="var(--ink)">Accounting</text>
+          <text x="908" y="158" text-anchor="end" font-family="IBM Plex Mono" font-size="9" fill="var(--entry)">SUBSCRIBED</text>
+          <text x="662" y="184" font-family="IBM Plex Sans" font-size="12" fill="var(--ink)">Ledger · $48,210 Cr</text>
+          <text x="662" y="206" font-family="IBM Plex Sans" font-size="12" fill="var(--ink)">3 open jobs · BAS due 28 Oct</text>
+          <text x="662" y="228" font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">Xero synced 2 hours ago</text>
+
+          <rect x="352" y="272" width="278" height="116" rx="2" fill="var(--paper)" stroke="var(--rule)" stroke-width="1.5"/>
+          <text x="368" y="294" font-family="IBM Plex Sans" font-size="12.5" font-weight="600" fill="var(--ink)">Support</text>
+          <text x="614" y="294" text-anchor="end" font-family="IBM Plex Mono" font-size="9" fill="var(--entry)">SUBSCRIBED</text>
+          <text x="368" y="320" font-family="IBM Plex Sans" font-size="12" fill="var(--ink)">2 open tickets</text>
+          <text x="368" y="342" font-family="IBM Plex Sans" font-size="12" fill="var(--ink)">Last contact 3 days ago</text>
+
+          <rect x="646" y="272" width="278" height="116" rx="2" fill="none" stroke="var(--amber)" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <text x="662" y="294" font-family="IBM Plex Sans" font-size="12.5" font-weight="600" fill="var(--muted)">E-Sign</text>
+          <text x="908" y="294" text-anchor="end" font-family="IBM Plex Mono" font-size="9" fill="var(--amber)">NOT SUBSCRIBED</text>
+          <text x="662" y="322" font-family="IBM Plex Sans" font-size="12" fill="var(--amber)">Send engagement letters</text>
+          <text x="662" y="342" font-family="IBM Plex Sans" font-size="12" fill="var(--amber)">for signature from here</text>
+          <rect x="662" y="354" width="104" height="22" rx="2" fill="var(--amber-soft)" stroke="var(--amber)" stroke-width="1.2"/>
+          <text x="714" y="369" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" font-weight="600" fill="var(--amber)">Add E-Sign</text>
+        </svg>
+      </div>
+      <figcaption><b>The base record is the shop window.</b> Modules do not own pages of their own inside the CRM — they contribute panels, timeline events, actions and search results to a record every subscriber already has. An unsubscribed module still occupies its slot, showing what it would do. The gap between the panels a firm sees and the panels it owns <em>is</em> the sales pitch, and it is rendered by the same code either way.</figcaption>
+    </figure>
+
+    <h3>What a module contributes</h3>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Contribution</th><th>Appears as</th><th>When not subscribed</th></tr></thead>
+        <tbody>
+          <tr><td><code>panels</code></td><td>A card on the client record</td><td>Upsell tile in the same slot</td></tr>
+          <tr><td><code>timeline</code></td><td>Events on the shared activity feed</td><td>Absent</td></tr>
+          <tr><td><code>actions</code></td><td>Buttons — "Run screening", "Send for signature"</td><td>Button with an upgrade prompt</td></tr>
+          <tr><td><code>search</code></td><td>Module records in global search</td><td>Absent</td></tr>
+          <tr><td><code>nav</code></td><td>A top-level section in the shell</td><td>Hidden, or shown locked</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Two pricing shapes, one ledger</h3>
+    <p>Modules do not all price the same way, and the model has to carry both from the start. Accounting and Support are seat-priced; KYC is per verification (GrowKyc already prices at $70 a check) and E-Sign is per envelope. So an invoice is subscription lines plus metered lines.</p>
+    <p>The metering already exists: GrowKyc's <code>billing_events</code> is an append-only, <strong>hash-chained</strong>, tenant-scoped ledger with units, unit price, GST, Square payment linkage and a chain-verification endpoint. It needs one new dimension — <code>module</code> — and subscription lines alongside the metered ones. That is a small change to a solid foundation, not a new billing system.</p>
+
+    <h3>What happens on day 16</h3>
+    <p>A paid base plan needs an answer for non-payment, and in this product that answer is constrained by law rather than preference. Suspension must restrict <em>access</em> without destroying <em>records</em>.</p>
+
+    <figure>
+      <div class="scroll">
+        <svg viewBox="0 0 900 470" role="img" aria-label="Subscription lifecycle. A tenant starts in trialing for fifteen days with no card required. Adding a card moves it to active. A failed charge moves it to past due with a seven-day grace period, from which a successful retry returns it to active. When grace ends it becomes suspended, which is read-only with data intact, and paying returns it to active. After thirty days unpaid it is cancelled with a thirty-day export window, and then retained, with no access but records kept. A note explains that AML and KYC records carry a seven-year AUSTRAC retention obligation that outlives the subscription, so retained must never mean deleted.">
+          <defs>
+            <marker id="l1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker>
+            <marker id="l2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--entry)"/></marker>
+          </defs>
+
+          <rect x="120" y="24" width="250" height="52" rx="2" fill="var(--entry-soft)" stroke="var(--entry)" stroke-width="1.6"/>
+          <text x="136" y="46" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="var(--ink)">trialing</text>
+          <text x="136" y="64" font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">15 days · card held, $0 charged</text>
+
+          <rect x="120" y="102" width="250" height="52" rx="2" fill="var(--entry-soft)" stroke="var(--entry)" stroke-width="1.6"/>
+          <text x="136" y="124" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="var(--ink)">active</text>
+          <text x="136" y="142" font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">$99/mo + module lines</text>
+
+          <rect x="120" y="180" width="250" height="52" rx="2" fill="var(--amber-soft)" stroke="var(--amber)" stroke-width="1.6"/>
+          <text x="136" y="202" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="var(--ink)">past_due</text>
+          <text x="136" y="220" font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">charge failed · 7-day grace</text>
+
+          <rect x="120" y="258" width="250" height="52" rx="2" fill="var(--amber-soft)" stroke="var(--amber)" stroke-width="1.6"/>
+          <text x="136" y="280" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="var(--ink)">suspended</text>
+          <text x="136" y="298" font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">read-only · data intact</text>
+
+          <rect x="120" y="336" width="250" height="52" rx="2" fill="var(--red-soft)" stroke="var(--red)" stroke-width="1.6"/>
+          <text x="136" y="358" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="var(--ink)">cancelled</text>
+          <text x="136" y="376" font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">30-day export window</text>
+
+          <rect x="120" y="414" width="250" height="52" rx="2" fill="none" stroke="var(--red)" stroke-width="1.6" stroke-dasharray="5 4"/>
+          <text x="136" y="436" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="var(--ink)">retained</text>
+          <text x="136" y="454" font-family="IBM Plex Mono" font-size="9.5" fill="var(--red)">no access · records kept</text>
+
+          <g stroke="var(--ink)" stroke-width="1.5" marker-end="url(#l1)">
+            <line x1="245" y1="76" x2="245" y2="96"/>
+            <line x1="245" y1="154" x2="245" y2="174"/>
+            <line x1="245" y1="232" x2="245" y2="252"/>
+            <line x1="245" y1="310" x2="245" y2="330"/>
+            <line x1="245" y1="388" x2="245" y2="408"/>
+          </g>
+          <g font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">
+            <text x="256" y="91">day 16 · first charge $108.90</text>
+            <text x="256" y="169">charge fails</text>
+            <text x="256" y="247">grace ends</text>
+            <text x="256" y="325">30 days unpaid</text>
+            <text x="256" y="403">export window closes</text>
+          </g>
+
+          <polyline points="120,206 84,206 84,128 114,128" fill="none" stroke="var(--entry)" stroke-width="1.4" marker-end="url(#l2)"/>
+          <polyline points="120,284 52,284 52,134 114,134" fill="none" stroke="var(--entry)" stroke-width="1.4" marker-end="url(#l2)"/>
+          <text x="76" y="170" font-family="IBM Plex Mono" font-size="9" fill="var(--entry)" transform="rotate(-90 76 170)" text-anchor="middle">retry succeeds</text>
+          <text x="44" y="210" font-family="IBM Plex Mono" font-size="9" fill="var(--entry)" transform="rotate(-90 44 210)" text-anchor="middle">pays</text>
+
+          <rect x="470" y="180" width="400" height="180" rx="2" fill="var(--red-soft)" stroke="var(--red)" stroke-width="1.6"/>
+          <text x="492" y="208" font-family="IBM Plex Mono" font-size="9.5" letter-spacing=".7" fill="var(--red)">HARD CONSTRAINT</text>
+          <text x="492" y="236" font-family="IBM Plex Sans" font-size="13" font-weight="600" fill="var(--ink)">Retention outlives the subscription</text>
+          <text x="492" y="262" font-family="IBM Plex Sans" font-size="11.5" fill="var(--ink)">AML/CTF records carry a seven-year</text>
+          <text x="492" y="280" font-family="IBM Plex Sans" font-size="11.5" fill="var(--ink)">AUSTRAC retention obligation. A firm</text>
+          <text x="492" y="298" font-family="IBM Plex Sans" font-size="11.5" fill="var(--ink)">that stops paying does not stop being</text>
+          <text x="492" y="316" font-family="IBM Plex Sans" font-size="11.5" fill="var(--ink)">a reporting entity.</text>
+          <text x="492" y="342" font-family="IBM Plex Mono" font-size="10" fill="var(--red)">retained ≠ deleted — ever</text>
+        </svg>
+      </div>
+      <figcaption><b>Non-payment is an access decision, not a data decision.</b> Suspension makes the tenant read-only; cancellation opens an export window; retention keeps the records. This is not generosity — E-Sign and GrowKyc already carry legal-hold and retention models precisely because signed agreements and AML records cannot be discarded on a billing event. Build the lifecycle around that from the start; retrofitting it after a customer churns is the expensive version.</figcaption>
+    </figure>
+
+    <h3>Three kinds of reuse — keep them distinct</h3>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Kind</th><th>Example</th><th>Bound at</th><th>Gated by subscription?</th></tr></thead>
+        <tbody>
+          <tr><td>Package</td><td><code>ui</code>, <code>storage</code>, <code>identity</code></td><td>Build time (import)</td><td class="mono">No — always present</td></tr>
+          <tr><td>Core service</td><td>customer, documents, audit</td><td>Runtime (in-process)</td><td class="mono">No — every tenant has it</td></tr>
+          <tr><td>Module capability</td><td>E-Sign, AML, Xero ledger</td><td>Runtime (capability lookup)</td><td class="ok">Yes</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="tag">The commercial mechanic that falls out of this</span>
+      <p>A module that another module <em>enhances</em> becomes an upsell surface. A firm with Accounting but not E-Sign sees "Send for signature" with an <strong>Add E-Sign</strong> prompt rather than a hidden feature or a broken button. Every cross-module link in the next section is therefore both an engineering dependency and a revenue path — which is why the interlinks are worth building properly.</p>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- 04 -->
+  <section>
+    <div class="shead"><span class="snum">04</span><h2>The interlink map</h2></div>
+    <p class="lede">Which module needs which. This is the part that only works once there is one codebase — today each of these links is either missing, faked, or built twice.</p>
+
+    <figure>
+      <div class="scroll">
+        <svg viewBox="0 0 900 430" role="img" aria-label="Dependency matrix. Nine consuming modules down the left, six shared capabilities across the top: identity and tenancy, CRM core, documents, e-sign, KYC and AML, and accounting with Xero. Filled squares mark required dependencies, open squares optional ones, and a dash marks the module itself. Identity, CRM core and documents are required by nearly every module; e-sign is required by accounting, client portal, start, lending and mobile; KYC and AML by accounting, start, lending and mobile; accounting and Xero by client portal, start and billing.">
+          <defs><style>.rw{font-family:"IBM Plex Sans";font-size:12.5px}.ch{font-family:"IBM Plex Mono";font-size:9.5px}</style></defs>
+          <text x="20" y="26" class="ch" fill="var(--muted)" letter-spacing="1">CONSUMER ↓ / PROVIDES →</text>
+          <g class="ch" fill="var(--muted)" text-anchor="middle">
+            <text x="300" y="52">identity +</text><text x="300" y="64">tenancy</text>
+            <text x="400" y="52">CRM</text><text x="400" y="64">core</text>
+            <text x="500" y="58">documents</text>
+            <text x="600" y="58">e-sign</text>
+            <text x="700" y="52">KYC /</text><text x="700" y="64">AML</text>
+            <text x="810" y="52">accounting</text><text x="810" y="64">+ Xero</text>
+          </g>
+          <line x1="20" y1="74" x2="870" y2="74" stroke="var(--rule)"/>
+          <g class="rw" fill="var(--ink)">
+            <text x="20" y="100">KYC / AML</text>
+            <text x="20" y="136">Accounting</text>
+            <text x="20" y="172">Client Portal</text>
+            <text x="20" y="208">Start (onboarding)</text>
+            <text x="20" y="244">E-Sign</text>
+            <text x="20" y="280">Training</text>
+            <text x="20" y="316">Support</text>
+            <text x="20" y="352">Lending (RequestIQ)</text>
+            <text x="20" y="388">Mobile app</text>
+          </g>
+          <g fill="var(--entry)">
+            <!-- identity col x=300 -->
+            <rect x="292" y="88" width="16" height="16" rx="2"/><rect x="292" y="124" width="16" height="16" rx="2"/><rect x="292" y="160" width="16" height="16" rx="2"/><rect x="292" y="196" width="16" height="16" rx="2"/><rect x="292" y="232" width="16" height="16" rx="2"/><rect x="292" y="268" width="16" height="16" rx="2"/><rect x="292" y="304" width="16" height="16" rx="2"/><rect x="292" y="340" width="16" height="16" rx="2"/><rect x="292" y="376" width="16" height="16" rx="2"/>
+            <!-- crm core x=400 -->
+            <rect x="392" y="88" width="16" height="16" rx="2"/><rect x="392" y="124" width="16" height="16" rx="2"/><rect x="392" y="160" width="16" height="16" rx="2"/><rect x="392" y="196" width="16" height="16" rx="2"/><rect x="392" y="232" width="16" height="16" rx="2"/><rect x="392" y="304" width="16" height="16" rx="2"/><rect x="392" y="340" width="16" height="16" rx="2"/><rect x="392" y="376" width="16" height="16" rx="2"/>
+            <!-- documents x=500 -->
+            <rect x="492" y="88" width="16" height="16" rx="2"/><rect x="492" y="124" width="16" height="16" rx="2"/><rect x="492" y="160" width="16" height="16" rx="2"/><rect x="492" y="196" width="16" height="16" rx="2"/><rect x="492" y="232" width="16" height="16" rx="2"/><rect x="492" y="268" width="16" height="16" rx="2"/><rect x="492" y="304" width="16" height="16" rx="2"/><rect x="492" y="340" width="16" height="16" rx="2"/><rect x="492" y="376" width="16" height="16" rx="2"/>
+            <!-- esign x=600 -->
+            <rect x="592" y="124" width="16" height="16" rx="2"/><rect x="592" y="160" width="16" height="16" rx="2"/><rect x="592" y="196" width="16" height="16" rx="2"/><rect x="592" y="340" width="16" height="16" rx="2"/><rect x="592" y="376" width="16" height="16" rx="2"/>
+            <!-- kyc/aml x=700 -->
+            <rect x="692" y="124" width="16" height="16" rx="2"/><rect x="692" y="196" width="16" height="16" rx="2"/><rect x="692" y="340" width="16" height="16" rx="2"/><rect x="692" y="376" width="16" height="16" rx="2"/>
+            <!-- accounting x=810 -->
+            <rect x="802" y="160" width="16" height="16" rx="2"/><rect x="802" y="196" width="16" height="16" rx="2"/>
+          </g>
+          <g fill="none" stroke="var(--muted)" stroke-width="1.4">
+            <rect x="592" y="88" width="16" height="16" rx="2"/>
+            <rect x="592" y="268" width="16" height="16" rx="2"/>
+            <rect x="692" y="160" width="16" height="16" rx="2"/>
+            <rect x="692" y="232" width="16" height="16" rx="2"/>
+            <rect x="802" y="232" width="16" height="16" rx="2"/>
+            <rect x="802" y="304" width="16" height="16" rx="2"/>
+            <rect x="392" y="268" width="16" height="16" rx="2"/>
+            <rect x="802" y="340" width="16" height="16" rx="2"/>
+          </g>
+          <g stroke="var(--rule)" stroke-width="2">
+            <line x1="694" y1="96" x2="706" y2="96"/>
+            <line x1="594" y1="240" x2="606" y2="240"/>
+            <line x1="804" y1="132" x2="816" y2="132"/>
+          </g>
+          <g class="ch" fill="var(--muted)">
+            <rect x="20" y="406" width="11" height="11" rx="2" fill="var(--entry)" stroke="none"/><text x="38" y="416">required</text>
+            <rect x="120" y="406" width="11" height="11" rx="2" fill="none" stroke="var(--muted)" stroke-width="1.4"/><text x="138" y="416">optional</text>
+            <line x1="220" y1="412" x2="232" y2="412" stroke="var(--rule)" stroke-width="2"/><text x="240" y="416">is the provider</text>
+          </g>
+        </svg>
+      </div>
+      <figcaption><b>Three columns are universal.</b> Identity, the CRM core and documents are required by essentially every module — which is exactly why they belong in shared packages and the core rather than inside any one module. The right three columns are the cross-module links you asked about, and each is currently either duplicated or missing.</figcaption>
+    </figure>
+
+    <h3>The four links, in detail</h3>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Provider</th><th>Consumer</th><th>What flows</th><th>State today</th></tr></thead>
+        <tbody>
+          <tr><td rowspan="5"><strong>E-Sign</strong></td><td>Accounting</td><td>Financial statements, tax return declarations, trust &amp; company resolutions</td><td class="warn">Own canvas-signature stub</td></tr>
+          <tr><td>Client Portal</td><td>Client document review &amp; approval, declaration gate</td><td class="ok">Adapter exists (548 lines)</td></tr>
+          <tr><td>Start</td><td>Engagement letter (stage 8) + signing gate (stage 9)</td><td class="warn">Generic driver, unpointed</td></tr>
+          <tr><td>Lending</td><td>Loan docs, guarantor signatures</td><td class="bad">Missing</td></tr>
+          <tr><td>Mobile</td><td>Sign-on-device</td><td class="bad">Missing</td></tr>
+
+          <tr><td rowspan="4"><strong>KYC / AML</strong></td><td>Start</td><td>Identity + PEP/sanctions gates (stage 9)</td><td class="warn">Generic driver, unpointed</td></tr>
+          <tr><td>Accounting</td><td>Client risk rating at onboarding + ongoing monitoring</td><td class="bad">Missing</td></tr>
+          <tr><td>Client Portal</td><td>Screening results on the client record</td><td class="bad">37-file duplicate engine</td></tr>
+          <tr><td>Lending</td><td>Borrower and director screening</td><td class="bad">Missing</td></tr>
+
+          <tr><td rowspan="3"><strong>Accounting / Xero</strong></td><td>Client Portal</td><td>Ledger, trial balance, cash position feeding advisory</td><td class="bad">Second Xero client</td></tr>
+          <tr><td>Start / Billing</td><td>Invoice push once engagement is priced</td><td class="warn">Driver written, unpointed</td></tr>
+          <tr><td>E-Sign</td><td>BAS lodgement documents</td><td class="ok">BAS adapter real (492 lines)</td></tr>
+
+          <tr><td rowspan="3"><strong>Client Portal</strong></td><td>CRM Core</td><td>Client-side activity onto the shared timeline</td><td class="bad">Missing</td></tr>
+          <tr><td>Support</td><td>Raise a ticket from inside the portal (widget embed)</td><td class="bad">Missing</td></tr>
+          <tr><td>Start</td><td>Activation hands the client into the portal</td><td class="warn">Handover exists, no receiver</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="tag">Why this gets cheap in one codebase</span>
+      <p>Eight of these fourteen links already have <em>one half</em> written — a generic driver waiting for a base URL, or an adapter waiting for a caller. In separate repos, wiring them means deployment coordination, contract versioning and cross-repo releases. In one codebase they become an import and a function call.</p>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- 05 -->
+  <section>
+    <div class="shead"><span class="snum">05</span><h2>The complete flow</h2></div>
+    <p class="lede">Two views of the same system: what happens on a single request, and what happens across a client's whole life in the product.</p>
+
+    <h3>One request, end to end</h3>
+    <figure>
+      <div class="scroll">
+        <svg viewBox="0 0 900 580" role="img" aria-label="Request lifecycle. A request from the browser shell or Flutter app passes through middleware for request id, CORS and rate limiting, then authentication which turns an OIDC token into a principal carrying user, tenant and roles. It then hits the entitlement gate, require_module, which returns 403 with an upsell payload if the tenant has not subscribed. Next is the permission check, then the module handler which calls core services and packages, then Postgres where the tenancy package applies a fail-closed filter. Finally the response is returned and audit, timeline and billing events are written.">
+          <defs><marker id="r1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+          <g font-family="IBM Plex Sans" font-size="12.5" font-weight="600" fill="var(--ink)">
+            <rect x="90" y="24" width="360" height="46" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.5"/><text x="108" y="52">Client — web shell or Flutter app</text>
+            <rect x="90" y="84" width="360" height="46" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.5"/><text x="108" y="112">Shell navigation</text>
+            <rect x="90" y="144" width="360" height="46" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.5"/><text x="108" y="172">Middleware — request-id · CORS · rate limit</text>
+            <rect x="90" y="204" width="360" height="46" rx="2" fill="var(--entry-soft)" stroke="var(--entry)" stroke-width="1.6"/><text x="108" y="232">Authenticate — OIDC token → principal</text>
+            <rect x="90" y="264" width="360" height="46" rx="2" fill="var(--entry-soft)" stroke="var(--entry)" stroke-width="2.4"/><text x="108" y="292">require_module("accounting")</text>
+            <rect x="90" y="324" width="360" height="46" rx="2" fill="var(--entry-soft)" stroke="var(--entry)" stroke-width="1.6"/><text x="108" y="352">require_permission("acc:post")</text>
+            <rect x="90" y="384" width="360" height="46" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.5"/><text x="108" y="412">Module handler → core + packages</text>
+            <rect x="90" y="444" width="360" height="46" rx="2" fill="var(--entry-soft)" stroke="var(--entry)" stroke-width="1.6"/><text x="108" y="472">PostgreSQL — tenant filter at the ORM</text>
+            <rect x="90" y="504" width="360" height="46" rx="2" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.5"/><text x="108" y="532">Response + events written</text>
+          </g>
+          <g stroke="var(--muted)" stroke-width="1.4" marker-end="url(#r1)">
+            <line x1="270" y1="70" x2="270" y2="80"/><line x1="270" y1="130" x2="270" y2="140"/>
+            <line x1="270" y1="190" x2="270" y2="200"/><line x1="270" y1="250" x2="270" y2="260"/>
+            <line x1="270" y1="310" x2="270" y2="320"/><line x1="270" y1="370" x2="270" y2="380"/>
+            <line x1="270" y1="430" x2="270" y2="440"/><line x1="270" y1="490" x2="270" y2="500"/>
+          </g>
+          <g font-family="IBM Plex Mono" font-size="10" fill="var(--muted)">
+            <text x="470" y="52">one login, every module</text>
+            <text x="470" y="112">renders only owned modules</text>
+            <text x="470" y="172">packages/ratelimit</text>
+            <text x="470" y="232">packages/identity · tenancy</text>
+            <text x="470" y="288" fill="var(--entry)">packages/subscriptions</text>
+            <text x="470" y="303" fill="var(--entry)">not subscribed → 403 + upsell</text>
+            <text x="470" y="352">packages/rbac</text>
+            <text x="470" y="412">core/ · packages/*</text>
+            <text x="470" y="472">packages/tenancy — fails closed</text>
+            <text x="470" y="526">audit · timeline · billing</text>
+            <text x="470" y="541">all hash-chained</text>
+          </g>
+        </svg>
+      </div>
+      <figcaption><b>The entitlement gate sits between authentication and permissions</b> — after we know who and which firm, before we ask what they may do. A tenant without the module gets a 403 carrying an upsell payload, which is what lets the shell render "Add E-Sign" instead of an error. Every request ends by writing to the audit, timeline and, where metered, billing ledgers.</figcaption>
+    </figure>
+
+    <h3>One client, across every module</h3>
+    <figure>
+      <div class="scroll">
+        <svg viewBox="0 0 960 470" role="img" aria-label="Client journey across modules. Six stages run left to right: lead, onboarding, activation, delivery, client access and ongoing compliance. Start is active in onboarding and activation. KYC and AML in onboarding and ongoing compliance. E-Sign in onboarding and delivery. Accounting in delivery. Client Portal in delivery and client access. Support in client access and ongoing compliance. Training across delivery, client access and compliance. Beneath them all, the CRM holds one client record and one activity timeline that every module writes into.">
+          <g font-family="IBM Plex Mono" font-size="10" fill="var(--muted)" text-anchor="middle">
+            <text x="244" y="40">1 · LEAD</text>
+            <text x="372" y="40">2 · ONBOARDING</text>
+            <text x="500" y="40">3 · ACTIVATION</text>
+            <text x="628" y="40">4 · DELIVERY</text>
+            <text x="756" y="40">5 · CLIENT</text><text x="756" y="54">ACCESS</text>
+            <text x="884" y="40">6 · ONGOING</text><text x="884" y="54">COMPLIANCE</text>
+          </g>
+          <line x1="20" y1="70" x2="948" y2="70" stroke="var(--rule)"/>
+          <g font-family="IBM Plex Sans" font-size="12.5" fill="var(--ink)">
+            <text x="20" y="104">Start</text>
+            <text x="20" y="146">KYC / AML</text>
+            <text x="20" y="188">E-Sign</text>
+            <text x="20" y="230">Accounting</text>
+            <text x="20" y="272">Client Portal</text>
+            <text x="20" y="314">Support</text>
+            <text x="20" y="356">Training <tspan font-family="IBM Plex Mono" font-size="9" fill="var(--muted)">staff</tspan></text>
+          </g>
+          <g fill="var(--entry-soft)" stroke="var(--entry)" stroke-width="1.4">
+            <rect x="316" y="87" width="240" height="26" rx="3"/>
+            <rect x="316" y="129" width="112" height="26" rx="3"/><rect x="828" y="129" width="112" height="26" rx="3"/>
+            <rect x="316" y="171" width="112" height="26" rx="3"/><rect x="572" y="171" width="112" height="26" rx="3"/>
+            <rect x="572" y="213" width="112" height="26" rx="3"/>
+            <rect x="572" y="255" width="240" height="26" rx="3"/>
+            <rect x="700" y="297" width="240" height="26" rx="3"/>
+            <rect x="572" y="339" width="368" height="26" rx="3"/>
+          </g>
+          <g font-family="IBM Plex Mono" font-size="9" fill="var(--entry)" text-anchor="middle">
+            <text x="436" y="104">11-stage lifecycle</text>
+            <text x="372" y="146">gates</text><text x="884" y="146">monitoring</text>
+            <text x="372" y="188">engagement</text><text x="628" y="188">declarations</text>
+            <text x="628" y="230">workpapers · BAS · Xero</text>
+            <text x="692" y="272">reports · cash · approvals</text>
+            <text x="820" y="314">tickets · chat</text>
+            <text x="756" y="356">competency · CPD</text>
+          </g>
+          <g stroke="var(--entry)" stroke-width="1.2" stroke-dasharray="3 3">
+            <line x1="372" y1="372" x2="372" y2="396"/><line x1="628" y1="372" x2="628" y2="396"/><line x1="884" y1="372" x2="884" y2="396"/>
+          </g>
+          <rect x="180" y="398" width="768" height="52" rx="2" fill="var(--entry-soft)" stroke="var(--entry)" stroke-width="2.2"/>
+          <text x="564" y="422" text-anchor="middle" font-family="Spectral" font-size="16" font-weight="600" fill="var(--ink)">Entiq CRM — one client record, one activity timeline</text>
+          <text x="564" y="440" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="var(--muted)">$99/mo base · every module above writes its events here</text>
+          <text x="20" y="428" font-family="IBM Plex Mono" font-size="9.5" fill="var(--entry)">ALWAYS ON</text>
+        </svg>
+      </div>
+      <figcaption><b>The CRM is the only thing present at every stage</b> — which is what justifies charging for it separately and what makes the modules worth more together than apart. A firm buying only Accounting still gets the client record; a firm adding KYC finds the same record already waiting, with history.</figcaption>
+    </figure>
+
+    <h3>Module reference</h3>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Module</th><th>Owns</th><th>Depends on</th><th>External</th><th>Pricing</th></tr></thead>
+        <tbody>
+          <tr><td><strong>CRM</strong> <span class="mono">core</span></td><td>Customer, entity, contact, relationship, timeline, tasks, notes, pipeline</td><td class="mono">—</td><td class="mono">ABR</td><td class="mono">$99/mo + GST</td></tr>
+          <tr><td><strong>KYC / AML</strong></td><td>Verification, screening, risk, cases, AUSTRAC reporting, SAR</td><td class="mono">core</td><td class="mono">Didit · Equifax · FrankieOne · Trulioo · OpenSanctions · DVS</td><td class="mono">per verification</td></tr>
+          <tr><td><strong>Accounting</strong></td><td>Workpapers, ledger, BAS, CGT, Div7A, FBT, PSI, SMSF, jobs, AI agents</td><td class="mono">core · esign · kyc</td><td class="mono">Xero · ATO</td><td class="mono">per seat</td></tr>
+          <tr><td><strong>E-Sign</strong></td><td>Agreements, signers, fields, evidence packages, certificates, legal hold</td><td class="mono">core · documents</td><td class="mono">ClamAV · S3</td><td class="mono">per envelope</td></tr>
+          <tr><td><strong>Start</strong></td><td>11-stage onboarding lifecycle, gates, proposals, engagement prep</td><td class="mono">core · kyc · esign · billing</td><td class="mono">ABR · payment mandate</td><td class="mono">per onboarding</td></tr>
+          <tr><td><strong>Client Portal</strong></td><td>Cash position, forecasts, scenarios, benchmarks, reports, approvals</td><td class="mono">core · accounting · esign</td><td class="mono">Xero · Azure Blob</td><td class="mono">per client seat</td></tr>
+          <tr><td><strong>Support</strong></td><td>Tickets, live chat, email inbox, SLA, widget</td><td class="mono">core</td><td class="mono">SMTP</td><td class="mono">per agent</td></tr>
+          <tr><td><strong>Training</strong></td><td>Courses, lessons, quizzes, certificates, competency, CPD</td><td class="mono">core</td><td class="mono">—</td><td class="mono">per seat</td></tr>
+          <tr><td><strong>Lending</strong></td><td>Intake, document classification, policy exceptions, credit readiness</td><td class="mono">core · kyc · esign</td><td class="mono">AWS · OCR</td><td class="mono">per file</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- 06 -->
+  <section>
+    <div class="shead"><span class="snum">06</span><h2>What gets deleted</h2></div>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Capability</th><th>Keep</th><th>Delete</th><th>Basis</th></tr></thead>
+        <tbody>
+          <tr><td>Onboarding <span class="mono">×5</span></td><td class="ok">Start</td><td>GrowKyc · Accounting portal · Client Portal · client_portal module</td><td>Only server-enforced sequential lifecycle</td></tr>
+          <tr><td>E-Sign <span class="mono">×3</span></td><td class="ok">E-Sign</td><td>Accounting <code>esignature</code> · Portal <code>signatures</code></td><td>Evidence packages, legal holds, ClamAV, 70 tests</td></tr>
+          <tr><td>AML <span class="mono">×2</span></td><td class="ok">GrowKyc</td><td>Client Portal <code>aml/</code> (37 files)</td><td>Full AUSTRAC suite, ~200 endpoints</td></tr>
+          <tr><td>Xero <span class="mono">×2</span></td><td class="ok">Accounting</td><td>Client Portal <code>xero.py</code></td><td>Token service, queue, webhooks, health monitor</td></tr>
+          <tr><td>UI kit <span class="mono">×4</span></td><td class="ok">packages/ui</td><td>3 copies (43 identical files)</td><td>Same files, already copied</td></tr>
+          <tr><td>Accounting UI <span class="mono">×2</span></td><td class="ok">Accounting</td><td>GrowKyc's 58 components</td><td>Mock-only, zero API wiring</td></tr>
+          <tr><td>Users / RBAC <span class="mono">×8</span></td><td class="ok">packages/identity + rbac</td><td>7 copies</td><td>One person, one login</td></tr>
+          <tr><td>Notify · audit · storage · webhooks · ratelimit</td><td class="ok">packages/*</td><td>~30 copies</td><td>Pure infrastructure, no domain content</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- 05 -->
+  <section>
+    <div class="shead"><span class="snum">07</span><h2>The build plan</h2></div>
+    <p class="lede">Three production systems and a store-reviewed mobile app stay live throughout. Nothing is rewritten; code moves, then de-duplicates. Each milestone ends in something you can demonstrate.</p>
+
+    <div class="phase"><div class="pnum">M0</div><div><p class="ptitle">Land the repos side by side</p><p class="pbody">Monorepo created; all nine imported with history preserved (<code>git subtree</code> / <code>filter-repo</code>). Nothing merges. CI builds each as it stands. Module manifest format agreed and written for all nine. Consolidate GrowAccounting's six scattered copies first.<br><em>Demo: one checkout, one CI run, nine green builds.</em></p></div></div>
+
+    <div class="phase"><div class="pnum">M1</div><div><p class="ptitle">Extract the zero-risk packages</p><p class="pbody"><em>ui, storage, pdf, ratelimit, apikeys, webhooks.</em> No domain logic, no data model, no migration — the safest possible first cut. The UI package alone deletes three duplicate copies of 46 components.<br><em>Demo: change a button once, see it change in four apps.</em></p></div></div>
+
+    <div class="phase"><div class="pnum">M2</div><div><p class="ptitle">The platform spine — identity, tenancy, subscriptions</p><p class="pbody">The keystone, and the only net-new build. One login per person; one canonical tenant; <code>tenant_subscriptions</code> plus <code>require_module()</code>. Built from GrowKyc's fail-closed tenancy and E-Sign's principal binding. Two security gaps close here, not later.<br><em>Demo: sign up a firm, log in once, reach a tenant that owns nothing yet.</em></p></div></div>
+
+    <div class="phase"><div class="pnum">M3</div><div><p class="ptitle">The $99 CRM — it must earn the second payment in 15 days</p><p class="pbody">Customer, entity, contact, relationship, timeline, tasks, notes, pipeline — promoted from GrowKyc's client and entity model, absorbing Accounting's ClientGroup hierarchy and Portal's Firm-Entity tree. Define the <code>client.360</code> panel slots now, with every module's tile rendering as an upsell. Fix globally-unique <code>users.email</code>, which today makes one person belong to exactly one firm. <em>Time-to-value is the whole game here:</em> GrowKyc's existing CSV import already ingests a Xero or MYOB contacts export — make that the first screen after signup.<br><em>Demo: a firm signs up, imports 400 clients from Xero in two minutes, and is working before it has paid anything.</em></p></div></div>
+
+    <div class="phase"><div class="pnum">M4</div><div><p class="ptitle">Prove the paid mechanism on Training and Support</p><p class="pbody">The two cheapest modules — 21 and 19 tables, no production coupling — move onto the spine, lose their own user tables, and fill their panel slots. Support's Prisma models convert to SQLAlchemy here rather than as a separate exercise. First real money through the subscription path.<br><em>Demo: buy Support from inside the free CRM; the empty tile fills with live tickets.</em></p></div></div>
+
+    <div class="phase"><div class="pnum">M5</div><div><p class="ptitle">KYC/AML and E-Sign onto the spine</p><p class="pbody">The two modules every other module depends on. Delete Client Portal's 37-file AML engine and its signature endpoints once the real ones are reachable.<br><em>Demo: run a screening and send a document for signature from inside Accounting.</em></p></div></div>
+
+    <div class="phase"><div class="pnum">M6</div><div><p class="ptitle">Accounting, Client Portal, Start — and the interlinks</p><p class="pbody">The expensive tier, and the payoff. Point Start's drivers at KYC/AML and E-Sign; point its stage-11 handover at the core. Delete Portal's second Xero client. Embed the Support widget in the Portal.<br><em>Demo: onboard a client end to end — intake, screening, signing, activation — across four modules, once.</em></p></div></div>
+
+    <div class="phase"><div class="pnum">M7</div><div><p class="ptitle">One shell, one API client, marketplace live</p><p class="pbody">Single React app, route-scoped per module, navigation driven by entitlements. Flutter client regenerated once against the unified contract — one store-review cycle instead of one per change. Self-serve signup and module marketplace open.<br><em>Demo: a firm signs itself up and buys a second module without you touching anything.</em></p></div></div>
+  </section>
+
+  <hr>
+
+  <!-- 06 -->
+  <section>
+    <div class="shead"><span class="snum">08</span><h2>Risks worth naming</h2></div>
+    <ul>
+      <li><strong>Nine stacks must converge.</strong> FastAPI 0.104 → 0.141, three Postgres majors, plus two Node backends and one on DynamoDB. Lending (RequestIQ) is serverless on AWS with a different database paradigm — it joins the monorepo as source, but should keep its own runtime until there is a reason not to.</li>
+      <li><strong>Two data-access layers</strong> — SQLAlchemy and Prisma. Support's 19 Prisma models are the smallest to convert; do it during its identity migration rather than as a separate exercise.</li>
+      <li><strong>Client Portal has a second active developer</strong> and squashed history. Agree branching before its code moves.</li>
+      <li><strong>Start changes daily.</strong> Import it late, or freeze a branch by agreement.</li>
+      <li><strong>Two security gaps close during phase 02, not after:</strong> Client Portal's fail-open firm scoping, and RequestIQ's tenant read from a request parameter.</li>
+    </ul>
+
+    <div class="note">
+      <span class="tag">Still needed to finalise sequencing</span>
+      <p><strong>Which modules are revenue-live today?</strong> <strong>Is Accounting or Client Portal the strategic centre of the accounting product?</strong> They are one product in two codebases. <strong>Is Lending in scope</strong>, given it is a different org, vertical and cloud?</p>
+    </div>
+  </section>
+
+  <footer>Nine repositories read at HEAD · 457 tables and 8 backends scanned · findings verified against source</footer>
+</div>

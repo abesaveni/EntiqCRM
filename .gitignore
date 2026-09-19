@@ -1,0 +1,26 @@
+node_modules/
+dist/
+build/
+.turbo/
+*.log
+.DS_Store
+Thumbs.db
+
+# secrets — never committed
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# python (backend, later)
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+*.db
+*.sqlite
+
+# editors
+.vscode/
+.idea/
