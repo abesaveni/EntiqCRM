@@ -11,12 +11,14 @@ import { Settings } from './pages/hq/Settings';
 import { ModuleRoute } from './pages/ModuleRoute';
 import { SignUp } from './pages/auth/SignUp';
 import { Login } from './pages/auth/Login';
+import { AcceptInvite } from './pages/auth/AcceptInvite';
 import { AccountClosed } from './pages/AccountClosed';
 import { Placeholder } from './pages/Placeholder';
 
 export const router = createBrowserRouter([
   { path: '/signup', element: <SignUp /> },
   { path: '/login', element: <Login /> },
+  { path: '/accept-invite', element: <AcceptInvite /> },
   { path: '/account-closed', element: <AccountClosed /> },
   {
     path: '/',

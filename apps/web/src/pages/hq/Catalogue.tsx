@@ -7,24 +7,27 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@entiq/ui/label';
 import { Input } from '@entiq/ui/input';
 import { catalogueModules, getModule, requiredClosure, enhancedBy, BASE_BUNDLE, PLATFORM_SERVICES, type ModuleKey, type ModuleManifest } from '@entiq/modules';
-import { useSession, isEntitled, fmtAud, monthlyBaseExGst, GST_RATE } from '@/state/session';
+import { useSession, fmtAud, monthlyBaseExGst, GST_RATE, describeError } from '@/state/session';
 import { PageHeader } from '@/components/PageHeader';
 import { StatusPill } from '@/components/StatusPill';
 import { ModuleIcon } from '@/lib/icons';
 
-/** Module catalogue + subscription selection — blueprint MODULE 01 screens 2 & 3. */
+/** Module catalogue + subscription selection — blueprint MODULE 01 screens 2 & 3. Backed by /modules and /subscriptions. */
 export function Catalogue() {
   const { key } = useParams();
   const navigate = useNavigate();
   const tenant = useSession((s) => s.tenant);
-  const subscriptions = useSession((s) => s.subscriptions);
+  const entitled = useSession((s) => s.entitled);
+  const can = useSession((s) => s.can);
+  const readOnly = useSession((s) => s.readOnly);
   const subscribe = useSession((s) => s.subscribe);
   const unsubscribe = useSession((s) => s.unsubscribe);
   const [confirm, setConfirm] = useState<ModuleManifest | null>(key ? safeGet(key) : null);
   const [seats, setSeats] = useState(3);
+  const [busy, setBusy] = useState(false);
 
-  const owned = (k: ModuleKey) => isEntitled({ tenant, subscriptions }, k);
   const isBase = (k: ModuleKey) => BASE_BUNDLE.includes(k) || PLATFORM_SERVICES.includes(k);
+  const canBuy = can('hq:subscriptions') && !readOnly;
   const groups: Array<{ label: string; filter: (m: ModuleManifest) => boolean }> = [
     { label: 'Base plan — included', filter: (m) => isBase(m.key) },
     { label: 'Compliance & onboarding', filter: (m) => ['start', 'verify', 'sign', 'requests', 'documents'].includes(m.key) },
@@ -34,14 +37,23 @@ export function Catalogue() {
   ];
   const base = monthlyBaseExGst();
 
-  const doSubscribe = (m: ModuleManifest) => {
-    const added = subscribe(m.key, m.pricing.model === 'per_seat' ? seats : undefined);
-    const extra = added.filter((k) => k !== m.key);
-    toast.success(`${m.shortName} added`, {
-      description: extra.length ? `Also enabled ${extra.map((k) => getModule(k).shortName).join(', ')} — required by ${m.shortName}.` : `It now appears in your switcher and on every client record.`,
-    });
-    setConfirm(null);
-    navigate('/hq/modules', { replace: true });
+  const closeDialog = () => { setConfirm(null); if (key) navigate('/hq/modules', { replace: true }); };
+
+  const doSubscribe = async (m: ModuleManifest) => {
+    setBusy(true);
+    try {
+      const added = await subscribe(m.key, m.pricing.model === 'per_seat' ? seats : undefined);
+      const extra = added.filter((k) => k !== m.key);
+      toast.success(`${m.shortName} added`, {
+        description: extra.length ? `Also enabled ${extra.map((k) => getModule(k).shortName).join(', ')} — required by ${m.shortName}.` : 'It now appears in your switcher and on every client record.',
+      });
+      closeDialog();
+    } catch (e) { toast.error(`Could not add ${m.shortName}`, { description: describeError(e) }); } finally { setBusy(false); }
+  };
+
+  const doRemove = async (m: ModuleManifest) => {
+    try { await unsubscribe(m.key); toast(`${m.shortName} removed`, { description: 'Your data is retained. Re-add any time.' }); }
+    catch (e) { toast.error(`Could not remove ${m.shortName}`, { description: describeError(e) }); }
   };
 
   return (
@@ -52,6 +64,8 @@ export function Catalogue() {
         description={`Base plan ${fmtAud(base)} + GST per month (${fmtAud(base * (1 + GST_RATE))} inc GST). Add modules individually; each one appears immediately across the platform.`}
         actions={<Button asChild variant="outline" size="sm"><Link to="/hq"><ArrowLeft className="mr-1 size-3.5" /> Overview</Link></Button>}
       />
+      {!can('hq:subscriptions') && <div className="mb-4 rounded-[5px] border border-info/40 bg-info-bg px-3 py-2 text-[13px] text-info">Only the practice owner can change the subscription. You can browse the catalogue.</div>}
+      {readOnly && <div className="mb-4 rounded-[5px] border border-warn/40 bg-warn-bg px-3 py-2 text-[13px] text-warn">This practice is read-only until payment is restored — modules cannot be added or removed.</div>}
 
       {groups.map((g) => {
         const mods = catalogueModules().filter(g.filter);
@@ -61,14 +75,14 @@ export function Catalogue() {
             <h2 className="mb-3 text-[13px] font-medium uppercase tracking-[0.08em] text-muted-foreground">{g.label}</h2>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
               {mods.map((m) => (
-                <ModuleCard key={m.key} m={m} owned={owned(m.key)} base={isBase(m.key)} onAdd={() => setConfirm(m)} onRemove={() => { unsubscribe(m.key); toast(`${m.shortName} removed`, { description: 'Your data is retained. Re-add any time.' }); }} />
+                <ModuleCard key={m.key} m={m} owned={entitled(m.key)} base={isBase(m.key)} canBuy={canBuy} onAdd={() => setConfirm(m)} onRemove={() => void doRemove(m)} />
               ))}
             </div>
           </section>
         );
       })}
 
-      <Dialog open={!!confirm} onOpenChange={(o) => { if (!o) { setConfirm(null); if (key) navigate('/hq/modules', { replace: true }); } }}>
+      <Dialog open={!!confirm} onOpenChange={(o) => { if (!o) closeDialog(); }}>
         {confirm && (
           <DialogContent className="max-w-[520px]">
             <DialogHeader>
@@ -87,22 +101,22 @@ export function Catalogue() {
                   <Input id="seats" type="number" min={1} value={seats} onChange={(e) => setSeats(Math.max(1, Number(e.target.value)))} className="w-24" />
                 </div>
               )}
-              {requiredClosure(confirm.key).filter((k) => !isBase(k) && !owned(k)).length > 0 && (
+              {requiredClosure(confirm.key).filter((k) => !isBase(k) && !entitled(k)).length > 0 && (
                 <div className="rounded-[5px] border border-info/40 bg-info-bg px-3 py-2.5 text-info">
-                  Also enables <strong>{requiredClosure(confirm.key).filter((k) => !isBase(k) && !owned(k)).map((k) => getModule(k).shortName).join(', ')}</strong> — {confirm.shortName} cannot run without {requiredClosure(confirm.key).filter((k) => !isBase(k) && !owned(k)).length > 1 ? 'them' : 'it'}.
+                  Also enables <strong>{requiredClosure(confirm.key).filter((k) => !isBase(k) && !entitled(k)).map((k) => getModule(k).shortName).join(', ')}</strong> — {confirm.shortName} cannot run without {requiredClosure(confirm.key).filter((k) => !isBase(k) && !entitled(k)).length > 1 ? 'them' : 'it'}.
                 </div>
               )}
-              {enhancedBy(confirm.key).filter((m) => owned(m.key)).length > 0 && (
+              {enhancedBy(confirm.key).filter((m) => entitled(m.key)).length > 0 && (
                 <div className="flex items-start gap-2 text-muted-foreground">
                   <Sparkles className="mt-0.5 size-3.5 shrink-0 text-primary" />
-                  <span>Unlocks richer features in <strong className="text-foreground">{enhancedBy(confirm.key).filter((m) => owned(m.key)).map((m) => m.shortName).join(', ')}</strong>, which you already have.</span>
+                  <span>Unlocks richer features in <strong className="text-foreground">{enhancedBy(confirm.key).filter((m) => entitled(m.key)).map((m) => m.shortName).join(', ')}</strong>, which you already have.</span>
                 </div>
               )}
               <p className="text-muted-foreground">Charged to your card ending {tenant?.cardLast4} on your next invoice, pro-rated. Remove any time; your data is retained.</p>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setConfirm(null)}>Cancel</Button>
-              <Button onClick={() => doSubscribe(confirm)}>Add {confirm.shortName}</Button>
+              <Button variant="outline" onClick={closeDialog} disabled={busy}>Cancel</Button>
+              <Button onClick={() => void doSubscribe(confirm)} disabled={busy || !canBuy}>{busy ? 'Adding…' : `Add ${confirm.shortName}`}</Button>
             </DialogFooter>
           </DialogContent>
         )}
@@ -111,7 +125,7 @@ export function Catalogue() {
   );
 }
 
-function ModuleCard({ m, owned, base, onAdd, onRemove }: { m: ModuleManifest; owned: boolean; base: boolean; onAdd: () => void; onRemove: () => void }) {
+function ModuleCard({ m, owned, base, canBuy, onAdd, onRemove }: { m: ModuleManifest; owned: boolean; base: boolean; canBuy: boolean; onAdd: () => void; onRemove: () => void }) {
   const planned = m.status === 'planned';
   return (
     <div className={`flex flex-col rounded-[6px] border bg-card p-4 ${owned ? 'border-primary/40' : ''}`}>
@@ -129,11 +143,11 @@ function ModuleCard({ m, owned, base, onAdd, onRemove }: { m: ModuleManifest; ow
       <div className="flex items-center justify-between gap-3 border-t pt-3">
         <span className="text-[12px] text-muted-foreground">{m.pricing.unit}</span>
         {base ? null : owned ? (
-          <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={onRemove}>Remove</Button>
+          <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={onRemove} disabled={!canBuy}>Remove</Button>
         ) : planned ? (
           <Button variant="outline" size="sm" disabled>Notify me</Button>
         ) : (
-          <Button size="sm" onClick={onAdd}>Add</Button>
+          <Button size="sm" onClick={onAdd} disabled={!canBuy}>Add</Button>
         )}
       </div>
     </div>

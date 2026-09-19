@@ -3,7 +3,7 @@ import { ArrowRight, CreditCard, Users, Plug, ShieldCheck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@entiq/ui/card';
 import { Button } from '@entiq/ui/button';
 import { getModule, purchasableModules } from '@entiq/modules';
-import { useSession, isEntitled, trialDaysLeft, fmtAud, monthlyBaseExGst, GST_RATE } from '@/state/session';
+import { useSession, trialDaysLeft, fmtAud, monthlyBaseExGst, GST_RATE } from '@/state/session';
 import { STAFF, INTEGRATIONS } from '@/mock/data';
 import { PageHeader } from '@/components/PageHeader';
 import { StatusPill, lifecycleTone } from '@/components/StatusPill';
@@ -11,8 +11,10 @@ import { ModuleIcon } from '@/lib/icons';
 
 export function HqOverview() {
   const tenant = useSession((s) => s.tenant)!;
-  const subscriptions = useSession((s) => s.subscriptions);
-  const owned = purchasableModules().filter((m) => isEntitled({ tenant, subscriptions }, m.key));
+  const entitled = useSession((s) => s.entitled);
+  const entitlements = useSession((s) => s.entitlements);
+  void entitlements;
+  const owned = purchasableModules().filter((m) => entitled(m.key));
   const base = monthlyBaseExGst();
   const attention = INTEGRATIONS.filter((i) => i.status === 'attention' || i.status === 'not_connected');
 

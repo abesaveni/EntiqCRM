@@ -1,7 +1,7 @@
 import { Navigate, useParams } from 'react-router-dom';
 import { Hammer } from 'lucide-react';
 import { getModule, type ModuleKey, type ModuleManifest } from '@entiq/modules';
-import { useSession, isEntitled } from '@/state/session';
+import { useSession } from '@/state/session';
 import { UpsellPage } from '@/components/Upsell';
 import { PageHeader } from '@/components/PageHeader';
 import { ModuleIcon } from '@/lib/icons';
@@ -13,11 +13,12 @@ import { ModuleIcon } from '@/lib/icons';
  */
 export function ModuleRoute() {
   const { key } = useParams();
-  const tenant = useSession((s) => s.tenant);
-  const subscriptions = useSession((s) => s.subscriptions);
+  const entitled = useSession((s) => s.entitled);
+  const entitlements = useSession((s) => s.entitlements);
+  void entitlements;
   let m: ModuleManifest;
   try { m = getModule(key as ModuleKey); } catch { return <Navigate to="/" replace />; }
-  if (!isEntitled({ tenant, subscriptions }, m.key)) return <UpsellPage module={m} />;
+  if (!entitled(m.key)) return <UpsellPage module={m} />;
   return <PortingPlaceholder module={m} />;
 }
 

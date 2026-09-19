@@ -1,0 +1,21 @@
+# Pinned with `==`. These exact versions are proven to install on Python 3.14 on the
+# build machine (they match the versions already running in the EnTIQ estate).
+# To upgrade: bump deliberately, run pytest, commit.
+
+fastapi==0.139.0
+uvicorn[standard]==0.51.0
+gunicorn==23.0.0
+
+SQLAlchemy==2.0.51
+alembic==1.18.5
+psycopg[binary]==3.3.4
+
+pydantic==2.13.4
+pydantic-settings==2.14.2
+email-validator==2.3.0
+python-dotenv==1.2.2
+
+PyJWT==2.10.1
+bcrypt==5.0.0
+python-multipart==0.0.32
+slowapi==0.1.10

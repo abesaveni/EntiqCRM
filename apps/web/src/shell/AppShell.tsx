@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useSession, tenantHasAccess, tenantIsReadOnly } from '@/state/session';
 import { ModuleSwitcher } from './ModuleSwitcher';
@@ -7,14 +8,24 @@ import { TrialBanner } from './TrialBanner';
 /**
  * The application frame — blueprint §2. Left module switcher (dark), top bar with
  * contextual nav / global search / notifications / user menu, lifecycle banner, content.
- * Unauthenticated → /login. Cancelled/retained tenants → the exit page.
+ * Bootstraps the session from stored tokens; anonymous → /login; cancelled/retained → exit page.
  */
 export function AppShell() {
-  const authenticated = useSession((s) => s.authenticated);
+  const status = useSession((s) => s.status);
   const tenant = useSession((s) => s.tenant);
+  const bootstrap = useSession((s) => s.bootstrap);
   const location = useLocation();
 
-  if (!authenticated) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  useEffect(() => { void bootstrap(); }, [bootstrap]);
+
+  if (status === 'idle' || status === 'loading') {
+    return (
+      <div className="flex h-full items-center justify-center text-[13px] text-muted-foreground" role="status" aria-live="polite">
+        <img src="/favicon.svg" alt="" className="mr-2 size-5 animate-pulse" /> Loading EnTIQ…
+      </div>
+    );
+  }
+  if (status === 'anonymous') return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   if (tenant && !tenantHasAccess(tenant) && !tenantIsReadOnly(tenant)) return <Navigate to="/account-closed" replace />;
 
   return (

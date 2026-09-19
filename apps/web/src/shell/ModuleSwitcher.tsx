@@ -3,7 +3,7 @@ import { Lock } from 'lucide-react';
 import { cn } from '@entiq/ui/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@entiq/ui/tooltip';
 import { catalogueModules, getModule, type ModuleKey, type ModuleManifest } from '@entiq/modules';
-import { useSession, isEntitled } from '@/state/session';
+import { useSession } from '@/state/session';
 import { ModuleIcon } from '@/lib/icons';
 
 /**
@@ -14,15 +14,17 @@ import { ModuleIcon } from '@/lib/icons';
  */
 export function ModuleSwitcher() {
   const tenant = useSession((s) => s.tenant);
-  const subscriptions = useSession((s) => s.subscriptions);
+  const entitled = useSession((s) => s.entitled);
+  const entitlements = useSession((s) => s.entitlements); // subscribe to changes so the rail re-renders on subscribe/unsubscribe
   const user = useSession((s) => s.user);
 
   const owned: ModuleManifest[] = [];
   const locked: ModuleManifest[] = [];
   for (const m of catalogueModules()) {
     if (m.status === 'planned') continue; // blueprint-only modules live in the catalogue, not the rail
-    (isEntitled({ tenant, subscriptions }, m.key) ? owned : locked).push(m);
+    (entitled(m.key) ? owned : locked).push(m);
   }
+  void entitlements;
 
   return (
     <TooltipProvider delayDuration={200}>

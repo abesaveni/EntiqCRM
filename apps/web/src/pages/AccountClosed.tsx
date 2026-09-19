@@ -6,7 +6,7 @@ import { useSession } from '@/state/session';
 /** Cancelled / retained tenants land here. Access is gone; records are not. */
 export function AccountClosed() {
   const tenant = useSession((s) => s.tenant);
-  const simulate = useSession((s) => s.simulateTenantStatus);
+  const simulate = useSession((s) => s.simulateLifecycle);
   const logout = useSession((s) => s.logout);
   return (
     <div className="flex min-h-full items-center justify-center px-6 py-12">
@@ -20,8 +20,8 @@ export function AccountClosed() {
         </p>
         <div className="flex justify-center gap-2">
           {tenant?.status === 'cancelled' && <Button><Download className="mr-1.5 size-4" /> Export all data</Button>}
-          <Button variant="outline" onClick={() => simulate('active')}>Reinstate (demo)</Button>
-          <Button variant="ghost" onClick={logout} asChild><Link to="/login">Sign out</Link></Button>
+          <Button variant="outline" onClick={() => void simulate('active')}>Reinstate (demo)</Button>
+          <Button variant="ghost" onClick={() => void logout()} asChild><Link to="/login">Sign out</Link></Button>
         </div>
       </div>
     </div>

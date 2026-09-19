@@ -4,12 +4,12 @@ import { Input } from '@entiq/ui/input';
 import { Label } from '@entiq/ui/label';
 import { Switch } from '@entiq/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@entiq/ui/select';
-import { useSession, type LifecycleStatus } from '@/state/session';
+import { useSession, describeError, type LifecycleStatus } from '@/state/session';
 import { PageHeader } from '@/components/PageHeader';
 
 export function Settings() {
   const tenant = useSession((s) => s.tenant)!;
-  const simulate = useSession((s) => s.simulateTenantStatus);
+  const simulate = useSession((s) => s.simulateLifecycle);
 
   return (
     <div className="page">
@@ -55,7 +55,7 @@ export function Settings() {
           <p className="mb-4 text-[13px] text-muted-foreground">Frontend-only: simulate the subscription lifecycle to see how the shell responds. Removed when billing goes live.</p>
           <div className="flex flex-wrap gap-2">
             {(['trialing', 'active', 'past_due', 'suspended', 'cancelled'] as LifecycleStatus[]).map((s) => (
-              <Button key={s} size="sm" variant={tenant.status === s ? 'default' : 'outline'} onClick={() => simulate(s)}>{s.replace('_', ' ')}</Button>
+              <Button key={s} size="sm" variant={tenant.status === s ? 'default' : 'outline'} onClick={() => void simulate(s).catch((e) => toast.error(describeError(e)))}>{s.replace('_', ' ')}</Button>
             ))}
           </div>
         </section>

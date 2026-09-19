@@ -1,208 +1,197 @@
 /**
- * Session + entitlement state.
+ * Session + entitlement state — backed by the platform spine (services/api).
  *
- * This is the FRONTEND model of what the platform spine will own server-side
- * (identity, tenant, tenant_subscriptions). It is deliberately shaped like the
- * eventual API so the swap from mock to live is a data-source change, not a
- * refactor. Persisted to localStorage so a demo survives reload.
- *
- * Commercial rules encoded here (decided 19 Sep 2026):
- *  - Base plan = Practice HQ + CRM, $99/mo + GST, 15-day trial, card at signup, $0 charged in trial.
- *  - Every other module is a separate subscription row.
- *  - Lifecycle: trialing → active → past_due → suspended → cancelled → retained.
- *    Access is granted in trialing/active/past_due; read-only in suspended; none after.
- *    Records are NEVER deleted on a billing event (AUSTRAC 7-year retention).
+ * The store keeps the same shape the screens were built against, now filled from /me.
+ * Entitlement is read from the server's `entitlements` map, never recomputed client-side:
+ * one record (tenant_subscriptions), one source of truth, three enforcement points
+ * (shell nav here, API middleware, billing meter).
  */
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { BASE_BUNDLE, PLATFORM_SERVICES, getModule, requiredClosure, type ModuleKey } from '@entiq/modules';
+import type { ModuleKey } from '@entiq/modules';
+import { api, ApiError, tokenStore, type LifecycleStatus as ApiLifecycle, type SessionOut, type TenantChoice } from '@/api/client';
 
-export type LifecycleStatus = 'trialing' | 'active' | 'past_due' | 'suspended' | 'cancelled' | 'retained';
-
-export interface Tenant {
-  id: string;
-  name: string;
-  slug: string;
-  abn?: string;
-  status: LifecycleStatus;
-  trialEndsAt: string; // ISO
-  createdAt: string;
-  cardOnFile: boolean;
-  cardLast4?: string;
-}
-
+export type LifecycleStatus = ApiLifecycle;
 export type UserRole = 'owner' | 'admin' | 'staff';
 
-export interface SessionUser {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  /** EnTIQ operator — may open Control Centre. Never true for a practice user. */
-  isOperator: boolean;
+export interface Tenant {
+  id: string; name: string; slug: string; abn?: string; timezone: string;
+  status: LifecycleStatus; trialEndsAt: string | null; currentPeriodEnd: string | null; createdAt: string;
+  cardOnFile: boolean; cardBrand?: string; cardLast4?: string;
 }
+export interface SessionUser { id: string; name: string; email: string; role: UserRole; isOperator: boolean }
+export interface Subscription { module: ModuleKey; status: LifecycleStatus; seats?: number; startedAt: string; requiredBy?: ModuleKey | null }
+export interface Pricing { baseCents: number; gstBps: number; baseIncGstCents: number; trialDays: number }
 
-export interface Subscription {
-  module: ModuleKey;
-  status: LifecycleStatus;
-  seats?: number;
-  startedAt: string;
-}
+export interface SignUpInput { practiceName: string; abn?: string; fullName: string; email: string; password: string; cardLast4: string; cardBrand?: string }
 
-export interface SignUpInput {
-  practiceName: string;
-  abn?: string;
-  fullName: string;
-  email: string;
-  cardLast4: string;
-}
+type Status = 'idle' | 'loading' | 'authenticated' | 'anonymous';
 
 interface SessionState {
+  status: Status;
   authenticated: boolean;
   tenant: Tenant | null;
   user: SessionUser | null;
   subscriptions: Subscription[];
+  entitlements: Partial<Record<ModuleKey, boolean>>;
+  grantedModules: ModuleKey[];
+  permissions: string[];
+  readOnly: boolean;
+  pricing: Pricing;
+  /** Set when login found more than one practice for this person. */
+  pendingTenants: TenantChoice[] | null;
+  pendingCreds: { email: string; password: string } | null;
 
-  signUp: (input: SignUpInput) => void;
-  login: (email: string) => void;
-  logout: () => void;
+  entitled: (key: ModuleKey) => boolean;
+  can: (permission: string) => boolean;
 
-  subscribe: (module: ModuleKey, seats?: number) => ModuleKey[];
-  unsubscribe: (module: ModuleKey) => void;
+  bootstrap: () => Promise<void>;
+  signUp: (input: SignUpInput) => Promise<void>;
+  login: (email: string, password: string) => Promise<'ok' | 'select_tenant'>;
+  selectTenant: (tenantId: string) => Promise<void>;
+  switchTenant: (tenantId: string) => Promise<void>;
+  acceptInvite: (token: string, fullName: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  refresh: () => Promise<void>;
 
-  /** Demo controls — simulate the lifecycle without a billing backend. */
-  simulateTenantStatus: (status: LifecycleStatus) => void;
+  subscribe: (module: ModuleKey, seats?: number) => Promise<ModuleKey[]>;
+  unsubscribe: (module: ModuleKey) => Promise<void>;
+  /** Non-production: walk the lifecycle without a billing backend. */
+  simulateLifecycle: (status: LifecycleStatus) => Promise<void>;
 }
 
-const ACCESS_STATES: LifecycleStatus[] = ['trialing', 'active', 'past_due'];
-const READONLY_STATES: LifecycleStatus[] = ['suspended'];
+const DEFAULT_PRICING: Pricing = { baseCents: 9900, gstBps: 1000, baseIncGstCents: 10890, trialDays: 15 };
 
-const iso = (d: Date) => d.toISOString();
-const daysFromNow = (n: number) => iso(new Date(Date.now() + n * 86_400_000));
-
-function slugify(s: string) {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+function mapSession(s: SessionOut) {
+  return {
+    tenant: {
+      id: s.tenant.id, name: s.tenant.name, slug: s.tenant.slug, abn: s.tenant.abn ?? undefined, timezone: s.tenant.timezone,
+      status: s.tenant.status, trialEndsAt: s.tenant.trial_ends_at, currentPeriodEnd: s.tenant.current_period_end, createdAt: s.tenant.created_at,
+      cardOnFile: s.tenant.card_on_file, cardBrand: s.tenant.card_brand ?? undefined, cardLast4: s.tenant.card_last4 ?? undefined,
+    } satisfies Tenant,
+    user: { id: s.user.id, name: s.user.full_name, email: s.user.email, role: s.role, isOperator: s.user.is_operator } satisfies SessionUser,
+    subscriptions: s.subscriptions.map((x) => ({ module: x.module_key, status: x.status, seats: x.seats ?? undefined, startedAt: x.started_at, requiredBy: x.required_by })) satisfies Subscription[],
+    entitlements: s.entitlements,
+    grantedModules: s.granted_modules,
+    permissions: s.permissions,
+    readOnly: s.read_only,
+    pricing: { baseCents: s.pricing.base_plan_cents, gstBps: s.pricing.gst_rate_bps, baseIncGstCents: s.pricing.base_plan_inc_gst_cents, trialDays: s.pricing.trial_days } satisfies Pricing,
+  };
 }
 
-export const useSession = create<SessionState>()(
-  persist(
-    (set, get) => ({
-      authenticated: false,
-      tenant: null,
-      user: null,
-      subscriptions: [],
+const EMPTY = {
+  tenant: null, user: null, subscriptions: [], entitlements: {}, grantedModules: [], permissions: [], readOnly: false, pricing: DEFAULT_PRICING,
+  pendingTenants: null, pendingCreds: null,
+};
 
-      signUp: (input) => {
-        const now = new Date();
-        set({
-          authenticated: true,
-          tenant: {
-            id: `ten_${Math.random().toString(36).slice(2, 10)}`,
-            name: input.practiceName,
-            slug: slugify(input.practiceName),
-            abn: input.abn,
-            status: 'trialing',
-            trialEndsAt: daysFromNow(15),
-            createdAt: iso(now),
-            cardOnFile: true,
-            cardLast4: input.cardLast4,
-          },
-          user: {
-            id: `usr_${Math.random().toString(36).slice(2, 10)}`,
-            name: input.fullName,
-            email: input.email,
-            role: 'owner',
-            isOperator: false,
-          },
-          // The base bundle is provisioned as a subscription row like any other module.
-          subscriptions: BASE_BUNDLE.map((m) => ({ module: m, status: 'trialing', startedAt: iso(now) })),
-        });
-      },
+export const useSession = create<SessionState>()((set, get) => {
+  const apply = (s: SessionOut) => set({ ...mapSession(s), status: 'authenticated', authenticated: true, pendingTenants: null, pendingCreds: null });
+  const clear = () => { tokenStore.set(null); set({ ...EMPTY, status: 'anonymous', authenticated: false }); };
 
-      login: (email) => {
-        // Mock: restore whatever tenant is persisted; if none, create a demo practice.
-        const s = get();
-        if (s.tenant) {
-          set({ authenticated: true });
-          return;
-        }
-        get().signUp({
-          practiceName: 'Ashfield Partners',
-          abn: '62 114 887 302',
-          fullName: email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
-          email,
-          cardLast4: '4242',
-        });
-      },
+  return {
+    status: 'idle',
+    authenticated: false,
+    ...EMPTY,
 
-      logout: () => set({ authenticated: false }),
+    entitled: (key) => get().entitlements[key] === true,
+    can: (permission) => get().permissions.includes(permission),
 
-      subscribe: (module, seats) => {
-        const s = get();
-        const now = iso(new Date());
-        // Hard dependencies are provisioned with the module — you cannot buy Advisory without Workpapers.
-        const closure = requiredClosure(module).filter(
-          (k) => !BASE_BUNDLE.includes(k) && !PLATFORM_SERVICES.includes(k) && !s.subscriptions.some((x) => x.module === k),
-        );
-        const added: ModuleKey[] = [...closure, module].filter((k) => !s.subscriptions.some((x) => x.module === k));
-        set({
-          subscriptions: [
-            ...s.subscriptions,
-            ...added.map((m) => ({ module: m, status: 'active' as LifecycleStatus, seats: m === module ? seats : undefined, startedAt: now })),
-          ],
-        });
-        return added;
-      },
+    bootstrap: async () => {
+      if (get().status !== 'idle') return;
+      if (!tokenStore.get()) { set({ status: 'anonymous' }); return; }
+      set({ status: 'loading' });
+      try { apply(await api.me()); } catch { clear(); }
+    },
 
-      unsubscribe: (module) => {
-        if (BASE_BUNDLE.includes(module)) return; // the base plan is cancelled at tenant level, not per module
-        set({ subscriptions: get().subscriptions.filter((x) => x.module !== module) });
-      },
+    signUp: async (input) => {
+      const out = await api.auth.signup({
+        practice_name: input.practiceName, abn: input.abn, full_name: input.fullName, email: input.email, password: input.password,
+        payment_method: { last4: input.cardLast4, brand: input.cardBrand ?? 'card' },
+      });
+      if (out.tokens && out.session) { tokenStore.set(out.tokens); apply(out.session); }
+    },
 
-      simulateTenantStatus: (status) => {
-        const t = get().tenant;
-        if (!t) return;
-        set({ tenant: { ...t, status } });
-      },
-    }),
-    { name: 'entiq.session.v1' },
-  ),
-);
+    login: async (email, password) => {
+      const out = await api.auth.login({ email, password });
+      if (out.requires_tenant_selection) {
+        set({ pendingTenants: out.tenants, pendingCreds: { email, password } });
+        return 'select_tenant';
+      }
+      if (out.tokens && out.session) { tokenStore.set(out.tokens); apply(out.session); }
+      return 'ok';
+    },
 
-/* ---------------------------------------------------------------- selectors */
+    selectTenant: async (tenantId) => {
+      const creds = get().pendingCreds;
+      if (!creds) throw new Error('No pending login');
+      const out = await api.auth.login({ ...creds, tenant_id: tenantId });
+      if (out.tokens && out.session) { tokenStore.set(out.tokens); apply(out.session); }
+    },
 
-export function tenantHasAccess(t: Tenant | null): boolean {
-  return !!t && ACCESS_STATES.includes(t.status);
-}
+    switchTenant: async (tenantId) => {
+      const out = await api.auth.switchTenant(tenantId);
+      if (out.tokens && out.session) { tokenStore.set(out.tokens); apply(out.session); }
+    },
 
-export function tenantIsReadOnly(t: Tenant | null): boolean {
-  return !!t && READONLY_STATES.includes(t.status);
-}
+    acceptInvite: async (token, fullName, password) => {
+      const out = await api.auth.acceptInvite({ token, full_name: fullName, password });
+      if (out.tokens && out.session) { tokenStore.set(out.tokens); apply(out.session); }
+    },
 
-/** Is the tenant entitled to `module` right now? Base bundle and platform services ride on tenant status. */
-export function isEntitled(state: Pick<SessionState, 'tenant' | 'subscriptions'>, module: ModuleKey): boolean {
-  const { tenant, subscriptions } = state;
-  if (!tenant) return false;
-  const tenantOk = ACCESS_STATES.includes(tenant.status) || READONLY_STATES.includes(tenant.status);
-  if (!tenantOk) return false;
-  if (BASE_BUNDLE.includes(module) || PLATFORM_SERVICES.includes(module)) return true;
-  const sub = subscriptions.find((s) => s.module === module);
-  return !!sub && (ACCESS_STATES.includes(sub.status) || READONLY_STATES.includes(sub.status));
-}
+    logout: async () => {
+      const t = tokenStore.get();
+      try { if (t) await api.auth.logout(t.refresh_token); } catch { /* already gone */ }
+      clear();
+    },
+
+    refresh: async () => { try { apply(await api.me()); } catch (e) { if (e instanceof ApiError && e.status === 401) clear(); else throw e; } },
+
+    subscribe: async (module, seats) => {
+      const out = await api.subscriptions.add(module, seats);
+      await get().refresh();
+      return out.added;
+    },
+
+    unsubscribe: async (module) => { await api.subscriptions.remove(module); await get().refresh(); },
+
+    simulateLifecycle: async (status) => { apply(await api.dev.lifecycle(status, 'demo control')); },
+  };
+});
+
+/* ---------------------------------------------------------------- selectors & helpers */
 
 export function useEntitled(module: ModuleKey): boolean {
-  return useSession((s) => isEntitled(s, module));
+  return useSession((s) => s.entitlements[module] === true);
 }
 
+const ACCESS: LifecycleStatus[] = ['trialing', 'active', 'past_due'];
+
+export function tenantHasAccess(t: Tenant | null): boolean { return !!t && ACCESS.includes(t.status); }
+export function tenantIsReadOnly(t: Tenant | null): boolean { return !!t && t.status === 'suspended'; }
+
 export function trialDaysLeft(t: Tenant | null): number {
-  if (!t) return 0;
+  if (!t?.trialEndsAt) return 0;
   return Math.max(0, Math.ceil((new Date(t.trialEndsAt).getTime() - Date.now()) / 86_400_000));
 }
 
-/** Monthly bill ex-GST at today's subscriptions (indicative — metered modules show their unit, not a total). */
-export function monthlyBaseExGst(): number {
-  return getModule('crm').pricing.fromAud ?? 99;
-}
-
+/** Base plan, ex GST, in dollars — from the server's pricing when a session exists. */
+export function monthlyBaseExGst(): number { return useSession.getState().pricing.baseCents / 100; }
 export const GST_RATE = 0.1;
 export const fmtAud = (n: number) => new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(n);
+
+/** Human text for an API failure, for forms. */
+export function describeError(e: unknown): string {
+  if (e instanceof ApiError) {
+    const d = (e.detail ?? {}) as Record<string, unknown>;
+    switch (e.code) {
+      case 'email_in_use': return 'That email already has an EnTIQ account. Sign in instead.';
+      case 'weak_password': return `Password needs ${(d.needs as string[] | undefined)?.join(', ') ?? 'to be stronger'}.`;
+      case 'invalid_credentials': return 'Email or password is incorrect.';
+      case 'account_locked': return 'Too many attempts. Try again in 15 minutes.';
+      case 'invalid_or_expired_invitation': return 'This invitation link is invalid or has expired.';
+      case 'tenant_read_only': return 'This practice is read-only until payment is restored.';
+      case 'already_a_member': return 'That person is already a member of this practice.';
+      default: return e.code ? e.code.replace(/_/g, ' ') : `Request failed (${e.status})`;
+    }
+  }
+  return e instanceof Error ? e.message : 'Something went wrong.';
+}

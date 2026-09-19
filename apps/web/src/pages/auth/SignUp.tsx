@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Check, CreditCard, ShieldCheck } from 'lucide-react';
 import { Button } from '@entiq/ui/button';
 import { Input } from '@entiq/ui/input';
 import { Label } from '@entiq/ui/label';
-import { useSession, fmtAud, monthlyBaseExGst, GST_RATE } from '@/state/session';
+import { useSession, fmtAud, monthlyBaseExGst, GST_RATE, describeError } from '@/state/session';
 
 /**
  * Practice sign-up — card at signup, $0 charged, first charge on day 16.
@@ -14,7 +14,10 @@ import { useSession, fmtAud, monthlyBaseExGst, GST_RATE } from '@/state/session'
 export function SignUp() {
   const navigate = useNavigate();
   const signUp = useSession((s) => s.signUp);
+  const status = useSession((s) => s.status);
   const [step, setStep] = useState<1 | 2>(1);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [f, setF] = useState({ practiceName: '', abn: '', fullName: '', email: '', password: '', card: '', exp: '', cvc: '' });
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
   const base = monthlyBaseExGst();
@@ -23,10 +26,19 @@ export function SignUp() {
   const cardDigits = f.card.replace(/\D/g, '');
   const step2Ok = cardDigits.length >= 15 && /^\d{2}\s?\/\s?\d{2}$/.test(f.exp) && /^\d{3,4}$/.test(f.cvc);
 
-  const submit = () => {
-    signUp({ practiceName: f.practiceName.trim(), abn: f.abn.trim() || undefined, fullName: f.fullName.trim(), email: f.email.trim(), cardLast4: cardDigits.slice(-4) });
-    navigate('/clients', { replace: true });
+  const submit = async () => {
+    setBusy(true); setError(null);
+    try {
+      await signUp({ practiceName: f.practiceName.trim(), abn: f.abn.trim() || undefined, fullName: f.fullName.trim(), email: f.email.trim(), password: f.password, cardLast4: cardDigits.slice(-4), cardBrand: 'card' });
+      navigate('/clients', { replace: true });
+    } catch (err) {
+      const msg = describeError(err);
+      setError(msg);
+      if (msg.toLowerCase().includes('password') || msg.toLowerCase().includes('email')) setStep(1);
+    } finally { setBusy(false); }
   };
+
+  if (status === 'authenticated') return <Navigate to="/" replace />;
 
   return (
     <div className="grid min-h-full grid-cols-1 lg:grid-cols-[1fr_440px]">
@@ -62,11 +74,12 @@ export function SignUp() {
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => setStep(1)}>Back</Button>
-                <Button className="flex-1" disabled={!step2Ok} onClick={submit}>Start 15-day trial</Button>
+                <Button className="flex-1" disabled={!step2Ok || busy} onClick={() => void submit()}>{busy ? 'Creating practice…' : 'Start 15-day trial'}</Button>
               </div>
               <p className="text-center text-[12px] text-muted-foreground">By continuing you agree to the EnTIQ terms and privacy policy.</p>
             </div>
           )}
+          {error && <div role="alert" className="mt-4 rounded-[5px] border border-error/40 bg-error-bg px-3 py-2 text-[13px] text-error">{error}</div>}
         </div>
       </div>
 

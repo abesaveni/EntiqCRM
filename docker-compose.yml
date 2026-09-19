@@ -1,0 +1,55 @@
+# Local infrastructure for EnTIQ. Secrets come from .env.local (git-ignored).
+#   docker compose up -d postgres redis
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: entiq_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-entiq}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-entiq_dev_only}
+      POSTGRES_DB: ${POSTGRES_DB:-entiq}
+    ports:
+      - "55432:5432"
+    volumes:
+      - entiq_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-entiq}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: entiq_redis
+    ports:
+      - "56379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./services/api
+    container_name: entiq_api
+    env_file: .env.local
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-entiq}:${POSTGRES_PASSWORD:-entiq_dev_only}@postgres:5432/${POSTGRES_DB:-entiq}
+      REDIS_URL: redis://redis:6379/0
+      MANIFESTS_PATH: /app/manifests.json
+    volumes:
+      - ./packages/modules/manifests.json:/app/manifests.json:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    profiles: ["api"]
+
+volumes:
+  entiq_pg:

@@ -4,7 +4,7 @@ import { ArrowRight, AlertTriangle, CheckSquare, Clock, Sparkles } from 'lucide-
 import { Card, CardContent, CardHeader, CardTitle } from '@entiq/ui/card';
 import { Button } from '@entiq/ui/button';
 import { getModule, purchasableModules } from '@entiq/modules';
-import { useSession, isEntitled } from '@/state/session';
+import { useSession } from '@/state/session';
 import { CLIENTS, TASKS, ACTIVITY } from '@/mock/data';
 import { PageHeader } from '@/components/PageHeader';
 import { StatusPill, riskTone } from '@/components/StatusPill';
@@ -13,15 +13,16 @@ import { ModuleIcon } from '@/lib/icons';
 /** Role-based home — blueprint §2: work due, risks, approvals, recent activity, next best actions. */
 export function Home() {
   const user = useSession((s) => s.user);
-  const tenant = useSession((s) => s.tenant);
-  const subscriptions = useSession((s) => s.subscriptions);
+  const entitled = useSession((s) => s.entitled);
+  const entitlements = useSession((s) => s.entitlements);
+  void entitlements;
 
   const overdue = TASKS.filter((t) => !t.done && isPast(new Date(t.due)));
   const dueSoon = TASKS.filter((t) => !t.done && !isPast(new Date(t.due)));
   const risks = CLIENTS.filter((c) => c.risk === 'Medium' || c.risk === 'High');
   const pipeline = CLIENTS.filter((c) => ['Lead', 'Proposal', 'Onboarding'].includes(c.stage));
   const recent = [...ACTIVITY].sort((a, b) => +new Date(b.at) - +new Date(a.at)).slice(0, 7);
-  const nextAdd = purchasableModules().filter((m) => m.status !== 'planned' && !isEntitled({ tenant, subscriptions }, m.key)).slice(0, 3);
+  const nextAdd = purchasableModules().filter((m) => m.status !== 'planned' && !entitled(m.key)).slice(0, 3);
 
   return (
     <div className="page">

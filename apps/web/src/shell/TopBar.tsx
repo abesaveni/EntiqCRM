@@ -6,7 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@entiq/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@entiq/ui/popover';
 import { catalogueModules, getModule, type ModuleKey } from '@entiq/modules';
-import { useSession, isEntitled } from '@/state/session';
+import { useSession } from '@/state/session';
 import { CLIENTS, CONTACTS, ACTIVITY } from '@/mock/data';
 import { ModuleIcon } from '@/lib/icons';
 import { formatDistanceToNow } from 'date-fns';
@@ -28,9 +28,10 @@ export function TopBar() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const user = useSession((s) => s.user);
-  const tenant = useSession((s) => s.tenant);
-  const subscriptions = useSession((s) => s.subscriptions);
+  const entitled = useSession((s) => s.entitled);
+  const entitlements = useSession((s) => s.entitlements);
   const logout = useSession((s) => s.logout);
+  void entitlements;
   const currentKey = useCurrentModule();
   const current = currentKey ? getModule(currentKey) : null;
   const [open, setOpen] = useState(false);
@@ -46,7 +47,7 @@ export function TopBar() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const entitledModules = catalogueModules().filter((m) => isEntitled({ tenant, subscriptions }, m.key));
+  const entitledModules = catalogueModules().filter((m) => entitled(m.key));
   const unread = ACTIVITY.slice(0, 4);
 
   return (
@@ -162,7 +163,7 @@ export function TopBar() {
           <DropdownMenuItem onSelect={() => navigate('/hq/settings')}><Settings className="mr-2 size-4" /> Practice settings</DropdownMenuItem>
           <DropdownMenuItem onSelect={() => navigate('/hq/modules')}><Building2 className="mr-2 size-4" /> Modules & subscription</DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => { logout(); navigate('/login'); }}><LogOut className="mr-2 size-4" /> Sign out</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => { void logout().then(() => navigate('/login')); }}><LogOut className="mr-2 size-4" /> Sign out</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </header>

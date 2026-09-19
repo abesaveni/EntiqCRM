@@ -5,7 +5,7 @@ import { Button } from '@entiq/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@entiq/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@entiq/ui/tabs';
 import { getModule, panelContributors, type ModuleManifest } from '@entiq/modules';
-import { useSession, isEntitled } from '@/state/session';
+import { useSession } from '@/state/session';
 import { ACTIVITY, CLIENTS, CONTACTS, TASKS } from '@/mock/data';
 import { StatusPill, riskTone, stageTone } from '@/components/StatusPill';
 import { UpsellPanel } from '@/components/Upsell';
@@ -23,15 +23,16 @@ import { ModulePanel } from './panels';
 export function Client360() {
   const { id } = useParams();
   const client = CLIENTS.find((c) => c.id === id);
-  const tenant = useSession((s) => s.tenant);
-  const subscriptions = useSession((s) => s.subscriptions);
+  const entitledKey = useSession((s) => s.entitled);
+  const entitlements = useSession((s) => s.entitlements);
+  void entitlements;
   if (!client) return <Navigate to="/clients" replace />;
 
   const contacts = CONTACTS.filter((p) => p.clientId === client.id);
   const timeline = ACTIVITY.filter((a) => a.clientId === client.id).sort((a, b) => +new Date(b.at) - +new Date(a.at));
   const tasks = TASKS.filter((t) => t.clientId === client.id && !t.done);
   const contributors = panelContributors();
-  const entitled = (m: ModuleManifest) => isEntitled({ tenant, subscriptions }, m.key);
+  const entitled = (m: ModuleManifest) => entitledKey(m.key);
 
   return (
     <div className="page">
@@ -48,7 +49,7 @@ export function Client360() {
           </div>
           <div className="mt-2 flex flex-wrap gap-1.5">
             <StatusPill tone={stageTone(client.stage)}>{client.stage}</StatusPill>
-            {client.risk && isEntitled({ tenant, subscriptions }, 'verify') && <StatusPill tone={riskTone(client.risk)}>Risk · {client.risk}</StatusPill>}
+            {client.risk && entitledKey('verify') && <StatusPill tone={riskTone(client.risk)}>Risk · {client.risk}</StatusPill>}
             {client.tags.map((t) => <StatusPill key={t}>{t}</StatusPill>)}
           </div>
         </div>
