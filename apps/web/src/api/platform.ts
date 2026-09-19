@@ -13,6 +13,8 @@ export interface BillingSummary {
   tenant_status: LifecycleStatus; base_plan_cents: number; base_plan_inc_gst_cents: number; gst_rate_bps: number; trial_ends_at: string | null; current_period_end: string | null;
   next_charge_at: string | null; next_charge_estimate_cents: number; card_on_file: boolean; card_last4: string | null; billing_mode: 'simulate' | 'stripe'; lines: BillingLine[]; recent: BillingEventOut[];
 }
+export interface IntegrationOut { key: string; name: string; category: string; status: 'connected' | 'simulated' | 'attention' | 'not_connected'; detail: string; used_by: string[]; scope: 'platform' | 'practice'; configurable_here: boolean; missing: string[]; connections: number; last_activity: string | null }
+export interface IntegrationSummary { connected: number; simulated: number; attention: number; not_connected: number; production_ready: boolean; blocking: string[] }
 export interface OutboundOut { id: string; to_address: string; subject: string; template: string | null; status: 'queued' | 'sent' | 'failed' | 'skipped'; attempts: number; last_error: string | null; created_at: string; sent_at: string | null; body_text: string }
 export interface LifecycleRun { stats: Record<string, unknown>; session: SessionOut }
 
@@ -61,6 +63,10 @@ export const platform = {
     remove: (id: string) => req<void>('DELETE', `/documents/${id}`),
     setHold: (id: string, hold: boolean, until?: string, reason?: string) => req<DocumentOut>('POST', `/documents/${id}/hold`, { hold, until: until ?? null, reason: reason ?? null }),
     share: (id: string, visible_to_client: boolean) => req<DocumentOut>('POST', `/documents/${id}/share`, { visible_to_client }),
+  },
+  integrations: {
+    list: () => req<IntegrationOut[]>('GET', '/integrations'),
+    summary: () => req<IntegrationSummary>('GET', '/integrations/summary'),
   },
   billing: {
     summary: () => req<BillingSummary>('GET', '/billing/summary'),

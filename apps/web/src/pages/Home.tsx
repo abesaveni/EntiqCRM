@@ -12,6 +12,7 @@ import { useSession, describeError } from '@/state/session';
 import { PageHeader } from '@/components/PageHeader';
 import { StatusPill, riskTone } from '@/components/StatusPill';
 import { ModuleIcon } from '@/lib/icons';
+import { AcrossModules } from '@/components/AcrossModules';
 
 /** Role-based home — blueprint §2: work due, risks, approvals, recent activity, next best actions. */
 export function Home() {
@@ -34,6 +35,8 @@ export function Home() {
         title={`Good ${greeting()}, ${user?.name.split(' ')[0]}`}
         description="What needs you today, across every module you have."
       />
+
+      <AcrossModules />
 
       {data && data.total_clients === 0 && (
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-[6px] border border-primary/30 bg-accent px-5 py-4">

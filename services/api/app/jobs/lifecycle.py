@@ -73,7 +73,7 @@ def run(db: Session, now: datetime | None = None) -> dict:
     base = settings.BASE_PLAN_PRICE_CENTS
     inc = _money(base + billing_service.gst_for(base))
     app_url = settings.APP_PUBLIC_URL
-    stats = {"checked": 0, "reminders": 0, "activated": 0, "past_due": 0, "suspended": 0, "cancelled": 0, "retained": 0, "stripe_pending": 0, "emails": 0}
+    stats = {"checked": 0, "reminders": 0, "activated": 0, "past_due": 0, "suspended": 0, "cancelled": 0, "retained": 0, "charge_failed": 0, "emails": 0}
 
     with platform_scope():
         tenants = db.execute(select(Tenant).where(Tenant.status.in_(["trialing", "past_due", "suspended", "cancelled"]))).scalars().all()
@@ -89,20 +89,28 @@ def run(db: Session, now: datetime | None = None) -> dict:
                         _mark_notice(db, t.id, kind)
                         stats["reminders"] += 1
                 if t.trial_ends_at <= now:
-                    if settings.BILLING_MODE == "simulate" or not settings.stripe_enabled:
+                    result = _charge(db, t, base, f"EnTIQ base plan — {t.name}", f"trial-{t.id}")
+                    if result.ok:
                         period_end = now + timedelta(days=30)
                         t.current_period_end = period_end
-                        _set_status(db, t, "active", "trial ended — base plan started (charge simulated: no payment provider configured)", now)
-                        billing_service.record(db, tenant_id=t.id, kind="charge.simulated", module_key="crm", amount_cents=base, status="simulated",
-                                               detail={"period_end": period_end.isoformat(), "card_last4": t.card_last4, "note": "BILLING_MODE=simulate — no money moved"})
+                        _set_status(db, t, "active", "trial ended — base plan started" + (" (charge simulated: no payment provider configured)" if result.simulated else f" (charged {inc})"), now)
+                        billing_service.record(db, tenant_id=t.id, kind="charge.simulated" if result.simulated else "charge.succeeded", module_key="crm", amount_cents=base,
+                                               status="simulated" if result.simulated else "charged", stripe_ref=result.reference,
+                                               detail={"period_end": period_end.isoformat(), "card_last4": t.card_last4, "provider": result.provider,
+                                                       "note": "BILLING_MODE=simulate — no money moved" if result.simulated else "Charged through Stripe"})
                         if not _notice_sent(db, t.id, "trial_ended"):
-                            stats["emails"] += _email_owners(db, t, "trial_ended", lambda first: templates.trial_ended_active(name=first, practice=t.name, amount_inc_gst=inc, period_end=period_end.strftime("%d %b %Y"), simulated=True, app_url=app_url))
+                            stats["emails"] += _email_owners(db, t, "trial_ended", lambda first: templates.trial_ended_active(name=first, practice=t.name, amount_inc_gst=inc, period_end=period_end.strftime("%d %b %Y"), simulated=result.simulated, app_url=app_url))
                             _mark_notice(db, t.id, "trial_ended")
                         stats["activated"] += 1
                     else:
-                        # Stripe keys present: the charge path lands with the Stripe integration. Do not fake an outcome.
-                        stats["stripe_pending"] += 1
-                        log.warning("tenant %s trial ended; BILLING_MODE=stripe charge not yet implemented — left trialing", t.slug)
+                        # The charge was attempted and refused: start dunning rather than pretending it worked.
+                        _set_status(db, t, "past_due", f"payment failed at the end of the trial — {result.failure_message or result.failure_code or 'declined'}", now)
+                        billing_service.record(db, tenant_id=t.id, kind="charge.failed", module_key="crm", amount_cents=base, status="failed", stripe_ref=result.reference,
+                                               detail={"code": result.failure_code, "message": result.failure_message, "provider": result.provider, "needs_action": result.needs_action})
+                        if not _notice_sent(db, t.id, "payment_failed"):
+                            stats["emails"] += _email_owners(db, t, "payment_failed", lambda first: templates.payment_failed(name=first, practice=t.name, amount_inc_gst=inc, grace_days=settings.PAST_DUE_GRACE_DAYS, app_url=app_url))
+                            _mark_notice(db, t.id, "payment_failed")
+                        stats["charge_failed"] += 1
 
             elif t.status == "past_due" and t.status_changed_at and t.status_changed_at + timedelta(days=settings.PAST_DUE_GRACE_DAYS) <= now:
                 _set_status(db, t, "suspended", f"payment not received within {settings.PAST_DUE_GRACE_DAYS} days — read-only", now)
@@ -181,3 +189,23 @@ def generate_recurring_jobs(db: Session, now: datetime) -> int:
         db.info.pop("tenant_id", None)
     db.commit()
     return n
+
+
+def _charge(db: Session, t: Tenant, amount_cents: int, description: str, idempotency_key: str):
+    """Take the subscription payment through whichever gateway is configured (simulation by default)."""
+    from app.services import payments
+    gw = payments.gateway()
+    try:
+        customer = gw.ensure_customer(tenant_name=t.name, email=_owner_email(db, t) or "", existing_id=t.stripe_customer_id)
+        if customer and customer != t.stripe_customer_id:
+            t.stripe_customer_id = customer
+        return gw.charge(amount_cents=amount_cents, currency="AUD", customer_id=customer, description=description, idempotency_key=idempotency_key)
+    except Exception as e:  # noqa: BLE001 — a gateway outage must not crash the nightly job
+        log.exception("charge failed for tenant %s", t.slug)
+        return payments.ChargeResult(ok=False, simulated=False, provider=gw.name, status="failed", failure_code="gateway_error", failure_message=str(e)[:300])
+
+
+def _owner_email(db: Session, t: Tenant) -> str | None:
+    from app.models.identity import Membership, User
+    row = db.execute(select(User.email).join(Membership, Membership.user_id == User.id).where(Membership.tenant_id == t.id, Membership.role == "owner", Membership.status == "active").limit(1)).scalar_one_or_none()
+    return row

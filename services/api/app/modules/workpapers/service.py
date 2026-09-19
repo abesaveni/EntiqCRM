@@ -177,9 +177,8 @@ def add_item(db: Session, p: Workpaper, body: S.ItemIn) -> WorkpaperItem:
     it = WorkpaperItem(tenant_id=p.tenant_id, pack_id=p.id, section=body.section, key=key, label=body.label, description=body.description, account_code=body.account_code,
                        order=max((i.order for i in p.items), default=0) + 1, value_cents=body.value_cents, prior_cents=body.prior_cents)
     _recompute(it)
-    db.add(it)
+    p.items.append(it)
     db.flush()
-    db.refresh(p)
     return it
 
 
@@ -223,7 +222,7 @@ def patch_item(db: Session, p: Workpaper, i: WorkpaperItem, body: S.ItemPatch, a
 def raise_issue(db: Session, p: Workpaper, body: S.IssueIn, actor_mid: uuid.UUID | None, actor_label: str, *, auto: bool = False) -> WorkpaperIssue:
     x = WorkpaperIssue(tenant_id=p.tenant_id, pack_id=p.id, item_id=body.item_id, kind=body.kind, title=body.title[:300], detail=body.detail, severity=body.severity, blocking=body.blocking,
                        raised_by_membership_id=actor_mid, auto=auto)
-    db.add(x)
+    p.issues.append(x)
     # A reviewer's query parks the item; the automatic rules only flag the issue, so a non-blocking
     # variance note never leaves an item stuck in "queried".
     if body.item_id and not auto:
@@ -407,7 +406,7 @@ def sync(db: Session, p: Workpaper, actor_mid: uuid.UUID, actor_label: str) -> t
         if it is None:
             order += 1
             it = WorkpaperItem(tenant_id=p.tenant_id, pack_id=p.id, section=line.section, key=_slug(f"{line.account_code}_{line.label}"), label=line.label, account_code=line.account_code, order=order)
-            db.add(it)
+            p.items.append(it)
         it.value_cents, it.prior_cents = line.value_cents, line.prior_cents
         _recompute(it)
         n += 1
@@ -419,7 +418,6 @@ def sync(db: Session, p: Workpaper, actor_mid: uuid.UUID, actor_label: str) -> t
     if conn:
         conn.status, conn.last_sync_at, conn.last_error, conn.simulated = "connected", utcnow(), None, result.simulated
     db.flush()
-    db.refresh(p)
     run_checks(db, p)
     events.emit(db, tenant_id=p.tenant_id, client_id=p.client_id, module_key="workpapers", kind="ledger.synced", summary=f"Trial balance synced from {result.source}{' (simulated)' if result.simulated else ''}: {n} accounts",
                 actor_membership_id=actor_mid, actor_label=actor_label, ref_type="workpaper", ref_id=p.id)

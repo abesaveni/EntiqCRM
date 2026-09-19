@@ -30,7 +30,7 @@ from app.modules.practice import service as practice_service
 from app.modules.sign import router as sign_router
 from app.modules.start import router as start_router
 from app.modules.verify import router as verify_router
-from app.routers import audit_router, auth, billing, crm, dev, documents, health, me, notifications, subscriptions, users
+from app.routers import audit_router, auth, billing, crm, dev, documents, health, integrations, me, notifications, subscriptions, users
 from app.services import notify_service
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -92,6 +92,7 @@ app.include_router(crm.router, prefix=API_PREFIX)
 app.include_router(notifications.router, prefix=API_PREFIX)
 app.include_router(documents.router, prefix=API_PREFIX)
 app.include_router(billing.router, prefix=API_PREFIX)
+app.include_router(integrations.router, prefix=API_PREFIX)
 # Modules
 app.include_router(verify_router.router, prefix=API_PREFIX)
 app.include_router(sign_router.router, prefix=API_PREFIX)

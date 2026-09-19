@@ -5,9 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@entiq/ui/card';
 import { Button } from '@entiq/ui/button';
 import { getModule, purchasableModules } from '@entiq/modules';
 import { useSession, trialDaysLeft, fmtAud, monthlyBaseExGst, GST_RATE } from '@/state/session';
-import { INTEGRATIONS } from '@/mock/data';
 import { api, type MemberOut } from '@/api/client';
-import { platform, fmtCents, type BillingSummary } from '@/api/platform';
+import { platform, fmtCents, type BillingSummary, type IntegrationOut } from '@/api/platform';
 import { fmtDate } from '@/api/crm';
 import { PageHeader } from '@/components/PageHeader';
 import { StatusPill, lifecycleTone } from '@/components/StatusPill';
@@ -24,9 +23,11 @@ export function HqOverview() {
     void api.users.list().then(setMembers).catch(() => setMembers([]));
     void platform.billing.summary().then(setBilling).catch(() => setBilling(null));
   }, []);
+  const [integrations, setIntegrations] = useState<IntegrationOut[]>([]);
+  useEffect(() => { void platform.integrations.list().then(setIntegrations).catch(() => undefined); }, []);
   const owned = purchasableModules().filter((m) => entitled(m.key));
   const base = monthlyBaseExGst();
-  const attention = INTEGRATIONS.filter((i) => i.status === 'attention' || i.status === 'not_connected');
+  const attention = integrations.filter((i) => i.status === 'attention' || i.status === 'simulated');
 
   return (
     <div className="page">
@@ -81,14 +82,15 @@ export function HqOverview() {
             {attention.length > 0 && <StatusPill tone="warn">{attention.length} need attention</StatusPill>}
           </CardHeader>
           <CardContent className="space-y-2 text-[13px]">
-            {INTEGRATIONS.slice(0, 4).map((i) => (
+            {integrations.slice(0, 4).map((i) => (
               <div key={i.key} className="flex items-center justify-between">
                 <span>{i.name}</span>
-                <StatusPill tone={i.status === 'connected' ? 'success' : i.status === 'attention' ? 'warn' : 'neutral'}>
-                  {i.status === 'connected' ? 'Connected' : i.status === 'attention' ? 'Attention' : 'Not connected'}
+                <StatusPill tone={i.status === 'connected' ? 'success' : i.status === 'not_connected' ? 'neutral' : 'warn'}>
+                  {i.status === 'connected' ? 'Connected' : i.status === 'simulated' ? 'Simulated' : i.status === 'attention' ? 'Attention' : 'Not connected'}
                 </StatusPill>
               </div>
             ))}
+            {integrations.length === 0 && <p className="text-muted-foreground">Loading…</p>}
             <Button asChild variant="outline" size="sm" className="mt-1 w-full"><Link to="/hq/integrations">Integration hub <ArrowRight className="ml-1 size-3.5" /></Link></Button>
           </CardContent>
         </Card>
