@@ -13,6 +13,9 @@ Thumbs.db
 *.pem
 *.key
 
+# uploaded documents (local storage backend)
+services/api/storage/
+
 # python (backend, later)
 __pycache__/
 *.pyc

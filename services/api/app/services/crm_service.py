@@ -63,8 +63,12 @@ def clients_out(db: Session, clients: list[Client], *, with_aggregates: bool = T
     names = member_names(db, {c.owner_membership_id for c in clients if c.owner_membership_id})
     contact_counts: dict[uuid.UUID, int] = {}
     task_counts: dict[uuid.UUID, int] = {}
+    doc_counts: dict[uuid.UUID, int] = {}
     primaries: dict[uuid.UUID, Contact] = {}
     if with_aggregates:
+        from app.models.platform import Document
+        for cid, n in db.execute(select(Document.client_id, func.count()).where(Document.client_id.in_(ids), Document.deleted_at.is_(None)).group_by(Document.client_id)).all():
+            doc_counts[cid] = n
         for cid, n in db.execute(select(Contact.client_id, func.count()).where(Contact.client_id.in_(ids), Contact.archived_at.is_(None)).group_by(Contact.client_id)).all():
             contact_counts[cid] = n
         for cid, n in db.execute(select(Task.client_id, func.count()).where(Task.client_id.in_(ids), Task.status == "open").group_by(Task.client_id)).all():
@@ -80,7 +84,7 @@ def clients_out(db: Session, clients: list[Client], *, with_aggregates: bool = T
             address_line1=c.address_line1, address_line2=c.address_line2, suburb=c.suburb, state=c.state, postcode=c.postcode, country=c.country,
             source=c.source, external_ref=c.external_ref, tags=list(c.tags or []), custom=dict(c.custom or {}), archived_at=c.archived_at,
             created_at=c.created_at, updated_at=c.updated_at,
-            contact_count=contact_counts.get(c.id, 0), open_task_count=task_counts.get(c.id, 0),
+            contact_count=contact_counts.get(c.id, 0), open_task_count=task_counts.get(c.id, 0), document_count=doc_counts.get(c.id, 0),
             primary_contact=contact_out(primaries[c.id]) if c.id in primaries else None,
         ))
     return out
@@ -170,7 +174,8 @@ def change_stage(db: Session, c: Client, stage: str, reason: str | None, actor_m
     if stage == "Active" and c.since is None:
         c.since = utcnow().date()
     events.emit(db, tenant_id=c.tenant_id, client_id=c.id, module_key="crm", kind="stage.changed", summary=f"Moved from {old} to {stage}" + (f" — {reason}" if reason else ""),
-                detail={"from": old, "to": stage, "reason": reason}, actor_membership_id=actor_mid, actor_label=actor_label, ref_type="client", ref_id=c.id)
+                detail={"from": old, "to": stage, "reason": reason, "owner_membership_id": str(c.owner_membership_id) if c.owner_membership_id else None},
+                actor_membership_id=actor_mid, actor_label=actor_label, ref_type="client", ref_id=c.id)
     return c
 
 

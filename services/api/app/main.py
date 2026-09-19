@@ -14,7 +14,8 @@ from slowapi.middleware import SlowAPIMiddleware
 from app.core.config import enforce_production_safety, settings
 from app.core.limiter import limiter
 from app.core.tenancy import TenantContextMissing, TenantIsolationError, set_tenant
-from app.routers import audit_router, auth, crm, dev, health, me, subscriptions, users
+from app.routers import audit_router, auth, billing, crm, dev, documents, health, me, notifications, subscriptions, users
+from app.services import notify_service
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("entiq")
@@ -25,6 +26,7 @@ API_PREFIX = "/api/v1"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     enforce_production_safety()
+    notify_service.register()  # event subscribers: task assigned, stage changed, import completed
     from app.modules import registry
     log.info("EnTIQ API starting · env=%s · modules=%d · db=%s", settings.ENV, len(registry.all_modules()), settings.DATABASE_URL.split("://", 1)[0])
     yield
@@ -68,5 +70,8 @@ app.include_router(subscriptions.router, prefix=API_PREFIX)
 app.include_router(users.router, prefix=API_PREFIX)
 app.include_router(audit_router.router, prefix=API_PREFIX)
 app.include_router(crm.router, prefix=API_PREFIX)
+app.include_router(notifications.router, prefix=API_PREFIX)
+app.include_router(documents.router, prefix=API_PREFIX)
+app.include_router(billing.router, prefix=API_PREFIX)
 if not settings.is_production:
     app.include_router(dev.router, prefix=API_PREFIX)

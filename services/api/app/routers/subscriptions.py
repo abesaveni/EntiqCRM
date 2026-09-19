@@ -6,6 +6,7 @@ from app.core import audit, entitlements
 from app.core.database import get_db
 from app.core.deps import Principal, get_principal, require_permission
 from app.modules import registry
+from app.services import billing_service, notify_service
 
 router = APIRouter(tags=["subscriptions"])
 
@@ -42,6 +43,13 @@ def subscribe(body: schemas.SubscribeIn, p: Principal = Depends(require_permissi
     if added:
         audit.record(db, action="subscription.added", actor_user_id=p.user.id, tenant_id=p.tenant.id, target_type="module", target_id=body.module_key,
                      detail={"added": added, "seats": body.seats})
+        for key in added:
+            price = billing_service.indicative_price_cents(key)
+            billing_service.record(db, tenant_id=p.tenant.id, kind="subscription.started", module_key=key, amount_cents=(price or 0) * (body.seats or 1) if key == body.module_key and price else (price or 0),
+                                   detail={"seats": body.seats if key == body.module_key else None, "required_by": None if key == body.module_key else body.module_key, "indicative": True})
+        m = registry.get_module(body.module_key)
+        notify_service.notify_roles(db, tenant_id=p.tenant.id, roles=("owner", "admin"), exclude=p.membership.id, kind="subscription.added",
+                                    title=f"{m['shortName']} was added by {p.user.full_name}", body=m["outcome"], link=f"/hq/modules", module_key="hq")
     db.commit()
     return schemas.SubscribeOut(added=added, subscriptions=[_sub_out(s) for s in entitlements.subscriptions_for(db, p.tenant.id)],
                                 entitlements=entitlements.entitlement_map(db, p.tenant))
@@ -55,6 +63,7 @@ def unsubscribe(module_key: str, p: Principal = Depends(require_permission("hq:s
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail={"error": e.reason, "module": e.module_key})
     if changed:
         audit.record(db, action="subscription.cancelled", actor_user_id=p.user.id, tenant_id=p.tenant.id, target_type="module", target_id=module_key)
+        billing_service.record(db, tenant_id=p.tenant.id, kind="subscription.cancelled", module_key=module_key, detail={"by": p.user.email})
     db.commit()
     return schemas.SubscribeOut(added=[], subscriptions=[_sub_out(s) for s in entitlements.subscriptions_for(db, p.tenant.id)],
                                 entitlements=entitlements.entitlement_map(db, p.tenant))

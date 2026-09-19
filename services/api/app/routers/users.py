@@ -9,8 +9,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import schemas
-from app.core import audit
+from app.core import audit, mailer
 from app.core.config import settings
+from app.notify import templates
 from app.core.database import get_db
 from app.core.deps import Principal, get_principal, require_permission, require_writable
 from app.core.security import new_opaque_token, utcnow
@@ -51,10 +52,12 @@ def invite(body: schemas.InviteIn, p: Principal = Depends(require_permission("hq
     db.add(inv)
     db.flush()
     audit.record(db, action="invitation.sent", actor_user_id=p.user.id, tenant_id=p.tenant.id, target_type="invitation", target_id=str(inv.id), detail={"email": body.email, "role": body.role, "modules": body.modules})
+    accept_url = f"{settings.APP_PUBLIC_URL}/accept-invite?token={raw}"
+    subject, text, html = templates.invitation(practice=p.tenant.name, inviter=p.user.full_name, role=body.role, accept_url=accept_url)
+    mailer.queue_email(db, tenant_id=p.tenant.id, to=body.email, subject=subject, text=text, html=html, template="invitation", ref_type="invitation", ref_id=inv.id)
     db.commit()
-    # TODO(M4): send via packages/notify once SMTP is wired. Until then, non-production returns the link.
-    url = f"{settings.APP_PUBLIC_URL}/accept-invite?token={raw}" if not settings.is_production else None
-    return schemas.InviteOut(invitation_id=inv.id, email=inv.email, expires_at=inv.expires_at, accept_url=url)
+    # The link is returned in non-production so the flow can be exercised without a mail server.
+    return schemas.InviteOut(invitation_id=inv.id, email=inv.email, expires_at=inv.expires_at, accept_url=accept_url if not settings.is_production else None)
 
 
 @router.patch("/{membership_id}/grants", response_model=schemas.MemberOut)

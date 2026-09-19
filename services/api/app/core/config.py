@@ -57,6 +57,18 @@ class Settings(BaseSettings):
     # Module registry — shared with the frontend
     MANIFESTS_PATH: str = str(REPO_ROOT / "packages" / "modules" / "manifests.json")
 
+    # Documents
+    STORAGE_BACKEND: Literal["local", "s3"] = "local"
+    STORAGE_DIR: str = str(REPO_ROOT / "services" / "api" / "storage")
+    AWS_REGION: str = "ap-southeast-2"
+    AWS_S3_BUCKET: str = ""
+    MAX_UPLOAD_MB: int = 25
+    CLAMAV_HOST: str = ""            # clamd TCP host; REQUIRED in production (uploads are refused without a scan)
+    CLAMAV_PORT: int = 3310
+
+    # Billing
+    BILLING_MODE: Literal["simulate", "stripe"] = "simulate"   # simulate: trial converts to active with a recorded, uncharged event
+
     # Integrations (optional; features degrade when absent)
     STRIPE_SECRET_KEY: str = ""
     STRIPE_PUBLISHABLE_KEY: str = ""
@@ -68,6 +80,8 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     SMTP_FROM: str = "no-reply@entiq.com.au"
     SMTP_USE_TLS: bool = True
+    # Real delivery is opt-in outside production so a dev box holding live SMTP creds never emails anyone by accident.
+    EMAIL_DELIVERY_ENABLED: bool = False
     OPENAI_API_KEY: str = ""
 
     RATE_LIMIT_DEFAULT: str = "300/minute"
@@ -98,6 +112,10 @@ class Settings(BaseSettings):
     def smtp_enabled(self) -> bool:
         return bool(self.SMTP_HOST and self.SMTP_USERNAME)
 
+    @property
+    def email_delivery_active(self) -> bool:
+        return self.smtp_enabled and (self.EMAIL_DELIVERY_ENABLED or self.is_production)
+
 
 settings = Settings()
 
@@ -118,6 +136,10 @@ def verify_production_safety() -> list[str]:
             problems.append("SQL_ECHO is enabled")
         if not settings.APP_PUBLIC_URL.startswith("https://"):
             problems.append("APP_PUBLIC_URL is not https")
+        if not settings.CLAMAV_HOST:
+            problems.append("CLAMAV_HOST is not set — anti-virus scanning is required for uploads in production")
+        if settings.BILLING_MODE == "simulate":
+            problems.append("BILLING_MODE is 'simulate' — production must charge through Stripe")
     return problems
 
 

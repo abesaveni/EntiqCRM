@@ -52,7 +52,7 @@ function body(m: ModuleManifest, c: ClientOut) {
     case 'practice': return <><Row k="Open jobs" v="0" /><Row k="Open tasks" v={c.open_task_count} /><Row k="Owner" v={c.owner_name ?? 'Unassigned'} /></>;
     case 'advisory': return active ? <><Row k="Cash position" v="—" /><Row k="Next meeting" v="Not scheduled" /></> : <Pending what="Cash position and forecasts" />;
     case 'requests': return <><Row k="Open request packs" v="0" /><p className="mt-2 text-muted-foreground">Send an adaptive document checklist.</p></>;
-    case 'documents': return <><Row k="Files" v="0" /><Row k="Under retention hold" v="0" /></>;
+    case 'documents': return <><Row k="Files on record" v={c.document_count} /><p className="mt-2 text-muted-foreground">Folders, OCR and storage tiers arrive with the Documents module; base attachments are always available on the record.</p></>;
     case 'client': return <><Row k="Portal access" v={c.primary_contact?.has_portal_access ? 'Invited' : 'Not invited'} /><Row k="Pending approvals" v="0" /></>;
     case 'billing': return <><Row k="Outstanding" v="$0.00" /><Row k="Last invoice" v="—" /></>;
     case 'lending': return <p className="text-muted-foreground">No finance applications for this client.</p>;

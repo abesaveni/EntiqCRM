@@ -7,6 +7,8 @@ import { getModule, purchasableModules } from '@entiq/modules';
 import { useSession, trialDaysLeft, fmtAud, monthlyBaseExGst, GST_RATE } from '@/state/session';
 import { INTEGRATIONS } from '@/mock/data';
 import { api, type MemberOut } from '@/api/client';
+import { platform, fmtCents, type BillingSummary } from '@/api/platform';
+import { fmtDate } from '@/api/crm';
 import { PageHeader } from '@/components/PageHeader';
 import { StatusPill, lifecycleTone } from '@/components/StatusPill';
 import { ModuleIcon } from '@/lib/icons';
@@ -17,7 +19,11 @@ export function HqOverview() {
   const entitlements = useSession((s) => s.entitlements);
   void entitlements;
   const [members, setMembers] = useState<MemberOut[] | null>(null);
-  useEffect(() => { void api.users.list().then(setMembers).catch(() => setMembers([])); }, []);
+  const [billing, setBilling] = useState<BillingSummary | null>(null);
+  useEffect(() => {
+    void api.users.list().then(setMembers).catch(() => setMembers([]));
+    void platform.billing.summary().then(setBilling).catch(() => setBilling(null));
+  }, []);
   const owned = purchasableModules().filter((m) => entitled(m.key));
   const base = monthlyBaseExGst();
   const attention = INTEGRATIONS.filter((i) => i.status === 'attention' || i.status === 'not_connected');
@@ -40,10 +46,17 @@ export function HqOverview() {
             <div className="flex items-baseline justify-between"><span className="text-muted-foreground">Base plan</span><span className="font-medium">{fmtAud(base)} + GST / mo</span></div>
             <div className="flex items-baseline justify-between"><span className="text-muted-foreground">Includes</span><span className="font-medium">Practice HQ · CRM · Billing</span></div>
             <div className="flex items-baseline justify-between"><span className="text-muted-foreground">Add-on modules</span><span className="font-medium">{owned.length}</span></div>
+            {billing && <div className="flex items-baseline justify-between"><span className="text-muted-foreground">Next charge</span><span className="font-medium">{billing.next_charge_at ? `${fmtCents(billing.next_charge_estimate_cents)} on ${fmtDate(billing.next_charge_at)}` : '—'}</span></div>}
             {tenant.status === 'trialing' && (
               <div className="rounded-[5px] bg-accent px-3 py-2 text-accent-foreground">
                 {trialDaysLeft(tenant)} days left. First charge {fmtAud(base * (1 + GST_RATE))} on day 16 to card ····{tenant.cardLast4}.
               </div>
+            )}
+            {billing?.billing_mode === 'simulate' && <div className="text-[12px] text-muted-foreground">Billing is in simulate mode — charges are recorded, not taken, until Stripe is connected.</div>}
+            {billing && billing.recent.length > 0 && (
+              <ul className="divide-y rounded-[5px] border text-[12px]">
+                {billing.recent.slice(0, 4).map((e) => <li key={e.id} className="flex items-center justify-between px-3 py-1.5"><span className="text-muted-foreground">{e.kind.replace('.', ' · ')}{e.module_key ? ` · ${e.module_key}` : ''}</span><span className="tabular-nums">{e.total_cents ? fmtCents(e.total_cents) : '—'}</span></li>)}
+              </ul>
             )}
             <Button asChild variant="outline" size="sm" className="w-full"><Link to="/hq/modules">Modules &amp; subscription <ArrowRight className="ml-1 size-3.5" /></Link></Button>
           </CardContent>

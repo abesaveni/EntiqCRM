@@ -1,12 +1,18 @@
 """Non-production helpers. The router is not mounted at all when ENV=production."""
-from fastapi import APIRouter, Depends
+from datetime import timedelta
+
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app import schemas
-from app.core import audit
+from app import schemas, schemas_platform as SP
+from app.core import audit, mailer
 from app.core.database import get_db
 from app.core.deps import Principal, get_principal, require_module, require_role
 from app.core.security import utcnow
+from app.core.tenancy import platform_scope
+from app.jobs import lifecycle
+from app.models.platform import OutboundMessage
 from app.services import session_service as svc
 
 router = APIRouter(prefix="/dev", tags=["dev"])
@@ -22,7 +28,42 @@ def set_lifecycle(body: schemas.LifecycleIn, p: Principal = Depends(require_role
     return svc.build_session(db, p.user, p.tenant, p.membership)
 
 
-# A gated probe per module so the gate itself is testable before any module is ported.
+@router.post("/time-travel", response_model=schemas.SessionOut)
+def time_travel(body: SP.TimeTravelIn, p: Principal = Depends(require_role("owner")), db: Session = Depends(get_db)):
+    """Move the tenant's clock so the lifecycle job can be exercised: end the trial now, age a past_due status, etc."""
+    if body.trial_ends_in_days is not None:
+        p.tenant.trial_ends_at = utcnow() + timedelta(days=body.trial_ends_in_days)
+    if body.status_changed_days_ago is not None:
+        p.tenant.status_changed_at = utcnow() - timedelta(days=body.status_changed_days_ago)
+    db.commit()
+    db.refresh(p.tenant)
+    return svc.build_session(db, p.user, p.tenant, p.membership)
+
+
+@router.post("/run-lifecycle")
+def run_lifecycle(p: Principal = Depends(require_role("owner")), db: Session = Depends(get_db)):
+    """Run the hourly lifecycle job now (all tenants), then return this tenant's fresh session alongside the stats."""
+    stats = lifecycle.run(db)
+    db.commit()
+    db.refresh(p.tenant)
+    return {"stats": stats, "session": svc.build_session(db, p.user, p.tenant, p.membership)}
+
+
+@router.post("/deliver-outbound")
+def deliver_outbound(p: Principal = Depends(require_role("owner")), db: Session = Depends(get_db)):
+    counts = mailer.deliver_pending(db)
+    db.commit()
+    return counts
+
+
+@router.get("/outbound", response_model=list[SP.OutboundOut])
+def outbound(limit: int = Query(20, ge=1, le=100), p: Principal = Depends(require_role("owner", "admin")), db: Session = Depends(get_db)):
+    """What this practice's users would have received by email — visible in dev even without SMTP."""
+    with platform_scope():
+        rows = db.execute(select(OutboundMessage).where(OutboundMessage.tenant_id == p.tenant.id).order_by(OutboundMessage.created_at.desc()).limit(limit)).scalars().all()
+    return [SP.OutboundOut(id=m.id, to_address=m.to_address, subject=m.subject, template=m.template, status=m.status, attempts=m.attempts, last_error=m.last_error, created_at=m.created_at, sent_at=m.sent_at, body_text=m.body_text) for m in rows]
+
+
 def _probe(key: str):
     def handler(p: Principal = Depends(require_module(key))):
         return {"module": key, "tenant": str(p.tenant.id), "ok": True}

@@ -7,6 +7,11 @@ import os
 os.environ["ENV"] = "test"
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ["SECRET_KEY"] = "test-secret-key-that-is-definitely-long-enough-0123456789"
+os.environ["STORAGE_DIR"] = __import__("tempfile").mkdtemp(prefix="entiq-test-storage-")
+os.environ["SMTP_HOST"] = ""
+os.environ["SMTP_USERNAME"] = ""
+os.environ["EMAIL_DELIVERY_ENABLED"] = "false"
+os.environ["CLAMAV_HOST"] = ""
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

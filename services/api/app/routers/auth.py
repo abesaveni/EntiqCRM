@@ -8,8 +8,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import schemas
-from app.core import audit, entitlements
+from app.core import audit, entitlements, mailer
 from app.core.config import settings
+from app.notify import templates
+from app.services import billing_service
 from app.core.database import get_db
 from app.core.deps import Principal, get_principal
 from app.core.limiter import limiter
@@ -54,6 +56,11 @@ def signup(request: Request, body: schemas.SignUpIn, db: Session = Depends(get_d
         audit.record(db, action="tenant.created", actor_user_id=user.id, tenant_id=tenant.id, target_type="tenant", target_id=str(tenant.id),
                      detail={"name": tenant.name, "trial_ends_at": tenant.trial_ends_at.isoformat(), "card_last4": tenant.card_last4}, ip=_ip(request))
         audit.record(db, action="user.signup", actor_user_id=user.id, tenant_id=tenant.id, target_type="user", target_id=str(user.id), detail={"email": user.email}, ip=_ip(request))
+        billing_service.record(db, tenant_id=tenant.id, kind="trial.started", module_key="crm", amount_cents=0, detail={"trial_ends_at": tenant.trial_ends_at.isoformat(), "card_last4": tenant.card_last4})
+        base = settings.BASE_PLAN_PRICE_CENTS
+        subject, text, html = templates.welcome(name=user.full_name.split()[0], practice=tenant.name, trial_ends=tenant.trial_ends_at.strftime("%d %b %Y"),
+                                                amount_inc_gst=f"${(base + billing_service.gst_for(base)) / 100:,.2f}", app_url=settings.APP_PUBLIC_URL)
+        mailer.queue_email(db, tenant_id=tenant.id, to=user.email, subject=subject, text=text, html=html, template="welcome", ref_type="tenant", ref_id=tenant.id)
         tokens = svc.issue_pair(db, user, tenant, membership, request.headers.get("user-agent"))
         db.commit()
     return schemas.LoginOut(tokens=tokens, session=svc.build_session(db, user, tenant, membership))

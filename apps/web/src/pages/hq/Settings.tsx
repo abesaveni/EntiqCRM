@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@entiq/ui/button';
+import { platform, type OutboundOut } from '@/api/platform';
 import { Input } from '@entiq/ui/input';
 import { Label } from '@entiq/ui/label';
 import { Switch } from '@entiq/ui/switch';
@@ -10,6 +12,9 @@ import { PageHeader } from '@/components/PageHeader';
 export function Settings() {
   const tenant = useSession((s) => s.tenant)!;
   const simulate = useSession((s) => s.simulateLifecycle);
+  const refresh = useSession((s) => s.refresh);
+  const [outbound, setOutbound] = useState<OutboundOut[] | null>(null);
+  const loadOutbound = () => platform.dev.outbound(30).then(setOutbound).catch((e) => toast.error(describeError(e)));
 
   return (
     <div className="page">
@@ -50,14 +55,39 @@ export function Settings() {
           </div>
         </section>
 
-        <section className="rounded-[6px] border border-dashed bg-card p-5">
+        <section className="rounded-[6px] border border-dashed bg-card p-5 lg:col-span-2">
           <h2 className="mb-1 text-[15px]">Demo controls</h2>
-          <p className="mb-4 text-[13px] text-muted-foreground">Frontend-only: simulate the subscription lifecycle to see how the shell responds. Removed when billing goes live.</p>
-          <div className="flex flex-wrap gap-2">
+          <p className="mb-4 text-[13px] text-muted-foreground">Non-production only. Set a lifecycle state directly, or move the clock and run the real hourly job to see reminders, conversion and dunning happen the way they will in production.</p>
+          <div className="mb-3 flex flex-wrap items-center gap-2 text-[13px]"><span className="w-24 text-muted-foreground">Set state</span>
             {(['trialing', 'active', 'past_due', 'suspended', 'cancelled'] as LifecycleStatus[]).map((s) => (
               <Button key={s} size="sm" variant={tenant.status === s ? 'default' : 'outline'} onClick={() => void simulate(s).catch((e) => toast.error(describeError(e)))}>{s.replace('_', ' ')}</Button>
             ))}
           </div>
+          <div className="mb-3 flex flex-wrap items-center gap-2 text-[13px]"><span className="w-24 text-muted-foreground">Move clock</span>
+            <Button size="sm" variant="outline" onClick={() => void platform.dev.timeTravel({ trial_ends_in_days: 4 }).then(refresh).catch((e) => toast.error(describeError(e)))}>Trial: 4 days left</Button>
+            <Button size="sm" variant="outline" onClick={() => void platform.dev.timeTravel({ trial_ends_in_days: 0.5 }).then(refresh).catch((e) => toast.error(describeError(e)))}>Trial: last day</Button>
+            <Button size="sm" variant="outline" onClick={() => void platform.dev.timeTravel({ trial_ends_in_days: -0.1 }).then(refresh).catch((e) => toast.error(describeError(e)))}>Trial ended</Button>
+            <Button size="sm" variant="outline" onClick={() => void platform.dev.timeTravel({ status_changed_days_ago: 8 }).then(refresh).catch((e) => toast.error(describeError(e)))}>Status 8 days old</Button>
+            <Button size="sm" variant="outline" onClick={() => void platform.dev.timeTravel({ status_changed_days_ago: 31 }).then(refresh).catch((e) => toast.error(describeError(e)))}>Status 31 days old</Button>
+          </div>
+          <div className="mb-4 flex flex-wrap items-center gap-2 text-[13px]"><span className="w-24 text-muted-foreground">Run job</span>
+            <Button size="sm" onClick={() => void platform.dev.runLifecycle().then(async (r) => { await refresh(); toast.success('Lifecycle job ran', { description: JSON.stringify(r.stats) }); void loadOutbound(); }).catch((e) => toast.error(describeError(e)))}>Run lifecycle job now</Button>
+            <Button size="sm" variant="outline" onClick={() => void loadOutbound()}>Show outbound emails</Button>
+          </div>
+          {outbound && (
+            <div className="rounded-[5px] border text-[12px]">
+              <div className="border-b bg-secondary/50 px-3 py-1.5 font-medium">Outbound emails · {outbound.length} {outbound.some((m) => m.status === 'skipped') && <span className="ml-2 font-normal text-muted-foreground">(delivery is off outside production — set EMAIL_DELIVERY_ENABLED=true to send)</span>}</div>
+              <ul className="divide-y">
+                {outbound.map((m) => (
+                  <li key={m.id} className="px-3 py-2">
+                    <details><summary className="flex cursor-pointer items-center gap-2"><span className={`rounded px-1.5 py-0.5 text-[10px] font-medium uppercase ${m.status === 'sent' ? 'bg-success-bg text-success' : m.status === 'failed' ? 'bg-error-bg text-error' : 'bg-muted text-muted-foreground'}`}>{m.status}</span><span className="font-medium">{m.subject}</span><span className="ml-auto text-muted-foreground">→ {m.to_address} · {m.template}</span></summary>
+                      <pre className="mt-2 whitespace-pre-wrap rounded bg-secondary/50 p-3 font-sans text-[12px] leading-5">{m.body_text}</pre></details>
+                  </li>
+                ))}
+                {outbound.length === 0 && <li className="px-3 py-4 text-center text-muted-foreground">Nothing queued yet.</li>}
+              </ul>
+            </div>
+          )}
         </section>
       </div>
     </div>

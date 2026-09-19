@@ -65,7 +65,8 @@ def platform_scope() -> Iterator[None]:
 #  - refresh_tokens: bound to a user session, validated before tenant context exists
 #  - audit_events:   append-only chain read by the platform plane; the tenant router
 #                    filters explicitly. Rows for platform actions have tenant_id NULL.
-TENANT_EXEMPT_TABLES: frozenset[str] = frozenset({"memberships", "refresh_tokens", "audit_events", "invitations_lookup"})
+#  - outbound_messages: the email delivery job runs with no tenant; platform mail has tenant_id NULL
+TENANT_EXEMPT_TABLES: frozenset[str] = frozenset({"memberships", "refresh_tokens", "audit_events", "outbound_messages"})
 
 
 def is_tenant_scoped(cls: Any) -> bool:

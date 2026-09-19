@@ -25,7 +25,7 @@ export interface ClientOut {
   since: string | null; email: string | null; phone: string | null; website: string | null;
   address_line1: string | null; address_line2: string | null; suburb: string | null; state: string | null; postcode: string | null; country: string;
   source: string | null; external_ref: string | null; tags: string[]; custom: Record<string, unknown>; archived_at: string | null;
-  created_at: string; updated_at: string; contact_count: number; open_task_count: number; primary_contact: ContactOut | null;
+  created_at: string; updated_at: string; contact_count: number; open_task_count: number; document_count: number; primary_contact: ContactOut | null;
 }
 export interface ClientPage { items: ClientOut[]; total: number; page: number; size: number }
 export interface ClientIn {

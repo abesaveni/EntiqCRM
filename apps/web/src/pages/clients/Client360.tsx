@@ -19,6 +19,7 @@ import { useSession, describeError } from '@/state/session';
 import { StatusPill, riskTone, priorityTone } from '@/components/StatusPill';
 import { StageMenu } from '@/components/StageMenu';
 import { UpsellPanel } from '@/components/Upsell';
+import { DocumentsCard } from '@/components/DocumentsCard';
 import { ModuleIcon } from '@/lib/icons';
 import { ModulePanel } from './panels';
 
@@ -197,6 +198,8 @@ export function Client360() {
             </CardHeader>
             <CardContent className="hidden" />
           </Card>
+
+          <DocumentsCard clientId={client.id} readOnly={readOnly} onChanged={async () => setClient(await crm.clients.get(id))} />
         </div>
 
         {/* RIGHT — module contributions */}

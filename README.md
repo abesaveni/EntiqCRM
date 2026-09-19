@@ -44,6 +44,12 @@ Sign up at `/signup` (card captured, $0 charged, 15-day trial) — the practice,
 subscriptions are created for real. **Practice HQ → Settings → Demo controls** walks the lifecycle
 (trialing → active → past_due → suspended → cancelled) through `POST /dev/lifecycle` (non-production only).
 
+**Platform (M4, live):** in-app notifications (bell) · email outbox with SMTP delivery (`EMAIL_DELIVERY_ENABLED`
+gates real sending outside production) · documents with storage backends, ClamAV hook and retention holds ·
+hash-chained billing ledger · **lifecycle job** (`python -m app.jobs.lifecycle`, run hourly): day-10/14 trial
+reminders, trial → active (charge simulated until Stripe), past_due → suspended → cancelled → retained.
+Practice HQ → Settings → Demo controls moves the clock and runs the job.
+
 **CRM (M3, live):** clients · contacts · relationship graph · shared timeline · tasks · notes · pipeline ·
 segments · duplicate detection · global search · **Xero / MYOB / CSV import** (`/clients/import`,
 auto-detects the export format, de-duplicates on ABN then name). Every module writes to the same

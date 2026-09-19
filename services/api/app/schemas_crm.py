@@ -142,6 +142,7 @@ class ClientOut(BaseModel):
     # aggregates
     contact_count: int = 0
     open_task_count: int = 0
+    document_count: int = 0
     primary_contact: ContactOut | None = None
 
 

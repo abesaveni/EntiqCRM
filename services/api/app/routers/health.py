@@ -24,5 +24,6 @@ def health_deep(db: Session = Depends(get_db)):
         "modules_registered": len(registry.all_modules()),
         "stripe": settings.stripe_enabled,
         "smtp": settings.smtp_enabled,
+        "email_delivery": settings.email_delivery_active,
         "safety_problems": verify_production_safety() if not settings.is_production else [],
     }

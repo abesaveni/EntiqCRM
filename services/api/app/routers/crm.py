@@ -207,6 +207,7 @@ def create_task(body: S.TaskIn, p: Principal = Depends(edit), _perm: Principal =
     db.flush()
     from app.core import events
     events.emit(db, tenant_id=p.tenant.id, client_id=t.client_id, module_key="crm", kind="task.created", summary=f"Task: {t.title}",
+                detail={"title": t.title, "assignee_membership_id": str(t.assignee_membership_id) if t.assignee_membership_id else None, "due_at": t.due_at.isoformat() if t.due_at else None},
                 actor_membership_id=p.membership.id, actor_label=_label(p), ref_type="task", ref_id=t.id)
     db.commit()
     cn = svc.client_name_map(db, {t.client_id})
