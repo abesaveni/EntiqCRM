@@ -88,6 +88,7 @@ class Contact(Base, UuidPk, Timestamps):
     notes: Mapped[str | None] = mapped_column(Text)
     # Set when this person is invited to the client portal (module 14).
     portal_user_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("users.id", ondelete="SET NULL"))
+    portal_access: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)   # Client portal (module 14) invitation accepted/active
     archived_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
 
     client: Mapped[Client] = relationship(back_populates="contacts")

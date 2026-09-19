@@ -20,6 +20,7 @@ import { StatusPill, riskTone, priorityTone } from '@/components/StatusPill';
 import { StageMenu } from '@/components/StageMenu';
 import { UpsellPanel } from '@/components/Upsell';
 import { DocumentsCard } from '@/components/DocumentsCard';
+import { MessagesCard } from '@/components/MessagesCard';
 import { ModuleIcon } from '@/lib/icons';
 import { ModulePanel } from './panels';
 
@@ -200,6 +201,7 @@ export function Client360() {
           </Card>
 
           <DocumentsCard clientId={client.id} readOnly={readOnly} onChanged={async () => setClient(await crm.clients.get(id))} />
+          {entitledKey('client') && <MessagesCard clientId={client.id} readOnly={readOnly} />}
         </div>
 
         {/* RIGHT — module contributions */}

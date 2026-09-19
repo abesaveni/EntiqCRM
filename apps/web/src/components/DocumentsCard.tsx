@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
-import { Upload, Download, Trash2, Lock, LockOpen, FileText, ShieldAlert } from 'lucide-react';
+import { Upload, Download, Trash2, Lock, LockOpen, FileText, ShieldAlert, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@entiq/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@entiq/ui/card';
 import { platform, fmtBytes, type DocumentOut } from '@/api/platform';
@@ -28,6 +28,10 @@ export function DocumentsCard({ clientId, readOnly, onChanged }: { clientId: str
     if (!confirm(`Remove ${d.filename}? It is retained in storage; it leaves this record.`)) return;
     try { await platform.documents.remove(d.id); await load(); await onChanged?.(); } catch (e) { toast.error(describeError(e)); }
   };
+  const entitled = useSession((s) => s.entitled);
+  const toggleShare = async (d: DocumentOut) => {
+    try { await platform.documents.share(d.id, !d.visible_to_client); await load(); } catch (e) { toast.error(describeError(e)); }
+  };
   const toggleHold = async (d: DocumentOut) => {
     try { await platform.documents.setHold(d.id, !d.retention_hold, undefined, d.retention_hold ? undefined : 'Compliance record'); await load(); }
     catch (e) { toast.error(describeError(e)); }
@@ -52,6 +56,7 @@ export function DocumentsCard({ clientId, readOnly, onChanged }: { clientId: str
                 <div className="text-[12px] text-muted-foreground">{d.kind} · {fmtBytes(d.size_bytes)} · {d.uploaded_by_name ?? 'Unknown'} · {formatDistanceToNow(new Date(d.created_at), { addSuffix: true })}</div>
               </div>
               <Button variant="ghost" size="icon" className="size-8" aria-label="Download" onClick={() => void platform.documents.download(d).catch((e) => toast.error(describeError(e)))}><Download className="size-4" /></Button>
+              {!readOnly && entitled('client') && <Button variant="ghost" size="icon" className={`size-8 ${d.visible_to_client ? 'text-primary' : ''}`} aria-label={d.visible_to_client ? 'Hide from client portal' : 'Share in client portal'} title={d.visible_to_client ? 'Visible in the client portal — click to hide' : 'Share in the client portal'} onClick={() => void toggleShare(d)}>{d.visible_to_client ? <Eye className="size-4" /> : <EyeOff className="size-4" />}</Button>}
               {!readOnly && (d.retention_hold ? (role === 'owner' || role === 'admin') : true) && (
                 <Button variant="ghost" size="icon" className="size-8" aria-label={d.retention_hold ? 'Lift retention hold' : 'Place retention hold'} onClick={() => void toggleHold(d)}>{d.retention_hold ? <LockOpen className="size-4" /> : <Lock className="size-4" />}</Button>
               )}

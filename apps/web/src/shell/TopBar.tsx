@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Search, Bell, ChevronDown, LogOut, Settings, User as UserIcon, Building2, CheckCheck } from 'lucide-react';
+import { Search, Bell, ChevronDown, LogOut, Settings, User as UserIcon, Building2, CheckCheck, LifeBuoy } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@entiq/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@entiq/ui/dropdown-menu';
@@ -143,6 +143,7 @@ export function TopBar() {
           <DropdownMenuLabel className="font-normal"><div className="text-[13px] font-medium">{user?.name}</div><div className="text-[12px] text-muted-foreground">{user?.email}</div></DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={() => navigate('/hq/settings')}><Settings className="mr-2 size-4" /> Practice settings</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => navigate('/hq/support')}><LifeBuoy className="mr-2 size-4" /> Help & support</DropdownMenuItem>
           <DropdownMenuItem onSelect={() => navigate('/hq/modules')}><Building2 className="mr-2 size-4" /> Modules &amp; subscription</DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={() => { void logout().then(() => navigate('/login')); }}><LogOut className="mr-2 size-4" /> Sign out</DropdownMenuItem>

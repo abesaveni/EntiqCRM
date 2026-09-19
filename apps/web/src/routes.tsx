@@ -31,6 +31,13 @@ import { ServiceCatalogue } from './pages/start/ServiceCatalogue';
 import { PracticeHome } from './pages/practice/PracticeHome';
 import { JobDetail } from './pages/practice/JobDetail';
 import { Deadlines, Team } from './pages/practice/DeadlinesTeam';
+import { RequestsHome } from './pages/requests/RequestsHome';
+import { RequestDetail } from './pages/requests/RequestDetail';
+import { RequestPublic } from './pages/requests/RequestPublic';
+import { PortalAccess } from './pages/client/PortalAccess';
+import { PortalLogin, PortalExchange, PortalHomePage, PortalRequestPage } from './pages/portal/PortalApp';
+import { SupportPage, SupportTicketPage } from './pages/hq/Support';
+import { SupportQueue, SupportTicketOps } from './pages/control/SupportQueue';
 
 export const router = createBrowserRouter([
   { path: '/signup', element: <SignUp /> },
@@ -39,6 +46,11 @@ export const router = createBrowserRouter([
   { path: '/account-closed', element: <AccountClosed /> },
   { path: '/s/:token', element: <PublicSign /> },          // signer surface: emailed token, no login
   { path: '/onboard/:token', element: <OnboardPublic /> },  // prospect surface: magic link, no login
+  { path: '/r/:token', element: <RequestPublic /> },        // request surface: emailed token, no login
+  { path: '/portal', element: <PortalLogin /> },            // client portal: passwordless
+  { path: '/portal/login/:token', element: <PortalExchange /> },
+  { path: '/portal/home', element: <PortalHomePage /> },
+  { path: '/portal/requests/:id', element: <PortalRequestPage /> },
   {
     path: '/',
     element: <AppShell />,
@@ -61,6 +73,13 @@ export const router = createBrowserRouter([
       { path: 'hq/users', element: <Users /> },
       { path: 'hq/integrations', element: <Integrations /> },
       { path: 'hq/settings', element: <Settings /> },
+      { path: 'hq/support', element: <SupportPage /> },
+      { path: 'hq/support/:id', element: <SupportTicketPage /> },
+
+      // Control Centre — operators
+      { path: 'control', element: <SupportQueue /> },
+      { path: 'control/support', element: <SupportQueue /> },
+      { path: 'control/support/:id', element: <SupportTicketOps /> },
 
       // Verify — module 04
       { path: 'verify', element: <VerifyHome /> },
@@ -81,6 +100,13 @@ export const router = createBrowserRouter([
       { path: 'practice/jobs/:id', element: <JobDetail /> },
       { path: 'practice/deadlines', element: <Deadlines /> },
       { path: 'practice/team', element: <Team /> },
+
+      // Requests — module 06
+      { path: 'requests', element: <RequestsHome /> },
+      { path: 'requests/:id', element: <RequestDetail /> },
+
+      // Client portal — module 14 (staff side)
+      { path: 'client', element: <PortalAccess /> },
 
       // Any other module: entitlement check → placeholder while porting
       { path: 'm/:key', element: <ModuleRoute /> },

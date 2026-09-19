@@ -74,6 +74,7 @@ class Document(Base, UuidPk, Timestamps):
     scan_status: Mapped[str] = mapped_column(String(16), default="pending", nullable=False)  # clean · infected · unavailable · pending
     # Compliance: a held document cannot be deleted by anyone until the hold is lifted by an owner/admin.
     retention_hold: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    visible_to_client: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)   # shown in the Client portal
     retention_until: Mapped[date | None] = mapped_column(Date)
     deleted_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
 

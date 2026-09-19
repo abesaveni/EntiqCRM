@@ -35,6 +35,7 @@ class DocumentOut(BaseModel):
     uploaded_by_name: str | None
     scan_status: str
     retention_hold: bool
+    visible_to_client: bool = False
     retention_until: date | None
     created_at: datetime
 
@@ -100,3 +101,7 @@ class OutboundOut(BaseModel):
 class TimeTravelIn(BaseModel):
     trial_ends_in_days: float | None = None
     status_changed_days_ago: float | None = None
+
+
+class ShareIn(BaseModel):
+    visible_to_client: bool

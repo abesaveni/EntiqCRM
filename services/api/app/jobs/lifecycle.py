@@ -129,6 +129,9 @@ def run(db: Session, now: datetime | None = None) -> dict:
         delivered = mailer.deliver_pending(db)
     stats["agreements_expired"] = expire_agreements(db, now)
     stats["recurring_jobs_created"] = generate_recurring_jobs(db, now)
+    from app.modules.requests import service as requests_service
+    stats["request_reminders"] = requests_service.remind_overdue(db, now)
+    db.commit()
     stats["delivery"] = delivered
     return stats
 

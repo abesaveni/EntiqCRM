@@ -30,7 +30,7 @@ edit = require_module("crm", write=True)
 def _out(d: Document, names: dict) -> S.DocumentOut:
     return S.DocumentOut(id=d.id, client_id=d.client_id, module_key=d.module_key, kind=d.kind, filename=d.filename, content_type=d.content_type, size_bytes=d.size_bytes,
                          sha256=d.sha256, description=d.description, uploaded_by_name=names.get(d.uploaded_by_membership_id) if d.uploaded_by_membership_id else None,
-                         scan_status=d.scan_status, retention_hold=d.retention_hold, retention_until=d.retention_until, created_at=d.created_at)
+                         scan_status=d.scan_status, retention_hold=d.retention_hold, visible_to_client=d.visible_to_client, retention_until=d.retention_until, created_at=d.created_at)
 
 
 @router.get("", response_model=list[S.DocumentOut])
@@ -112,5 +112,21 @@ def set_hold(document_id: uuid.UUID, body: S.HoldIn, p: Principal = Depends(edit
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail={"error": "hold_release_requires_admin"})
     d.retention_hold, d.retention_until = body.hold, body.until
     audit.record(db, action="document.hold_set" if body.hold else "document.hold_released", actor_user_id=p.user.id, tenant_id=p.tenant.id, target_type="document", target_id=str(d.id), detail={"until": str(body.until) if body.until else None, "reason": body.reason})
+    db.commit()
+    return _out(d, member_names(db, {d.uploaded_by_membership_id}))
+
+
+@router.post("/{document_id}/share", response_model=S.DocumentOut)
+def share(document_id: uuid.UUID, body: S.ShareIn, p: Principal = Depends(edit), db: Session = Depends(get_db)):
+    """Show or hide a document in the Client portal. Needs documents:share (module) or crm:edit for base attachments."""
+    d = db.get(Document, document_id)
+    if d is None or d.deleted_at is not None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail={"error": "document_not_found"})
+    if not (p.can("documents:share") or p.can("crm:edit")):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail={"error": "permission_denied", "permission": "documents:share"})
+    d.visible_to_client = body.visible_to_client
+    if d.client_id:
+        events.emit(db, tenant_id=p.tenant.id, client_id=d.client_id, module_key="crm", kind="document.shared" if body.visible_to_client else "document.unshared", summary=f"{d.filename} {'shared with' if body.visible_to_client else 'hidden from'} the client",
+                    actor_membership_id=p.membership.id, actor_label=p.user.full_name, ref_type="document", ref_id=d.id)
     db.commit()
     return _out(d, member_names(db, {d.uploaded_by_membership_id}))

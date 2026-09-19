@@ -4,9 +4,12 @@ from app.models.identity import Invitation, Membership, ModuleGrant, RefreshToke
 from app.models.platform import BillingEvent, Document, LifecycleNotice, Notification, OutboundMessage
 from app.models.subscription import TenantSubscription
 from app.models.tenant import Tenant
+from app.modules.client.models import PortalLoginToken, PortalMessage, PortalSession
 from app.modules.practice.models import Job, RecurringJob, TimeEntry
+from app.modules.requests.models import RequestItem, RequestPack
 from app.modules.sign.models import Agreement, Signer, SignEvent
 from app.modules.start.models import Onboarding, OnboardingStage, ServiceOffering
+from app.modules.support.models import SupportComment, SupportTicket
 from app.modules.verify.models import RiskAssessment, Screening, Verification
 
 __all__ = [
@@ -18,6 +21,9 @@ __all__ = [
     "Tenant",
     "Agreement", "Signer", "SignEvent",
     "Job", "RecurringJob", "TimeEntry",
+    "PortalLoginToken", "PortalMessage", "PortalSession",
+    "RequestItem", "RequestPack",
+    "SupportComment", "SupportTicket",
     "Onboarding", "OnboardingStage", "ServiceOffering",
     "RiskAssessment", "Screening", "Verification",
 ]

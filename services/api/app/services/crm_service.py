@@ -53,7 +53,7 @@ def staff(db: Session, tenant_id: uuid.UUID) -> list[S.StaffOut]:
 # ------------------------------------------------------------------ serialisers
 def contact_out(c: Contact) -> S.ContactOut:
     return S.ContactOut(id=c.id, client_id=c.client_id, first_name=c.first_name, last_name=c.last_name, full_name=c.full_name, email=c.email,
-                        phone=c.phone, role=c.role, is_primary=c.is_primary, notes=c.notes, has_portal_access=c.portal_user_id is not None, created_at=c.created_at)
+                        phone=c.phone, role=c.role, is_primary=c.is_primary, notes=c.notes, has_portal_access=c.portal_access, created_at=c.created_at)
 
 
 def clients_out(db: Session, clients: list[Client], *, with_aggregates: bool = True) -> list[S.ClientOut]:

@@ -84,6 +84,10 @@
     ],
     "nav": [
       {
+        "label": "Support queue",
+        "path": "/control/support"
+      },
+      {
         "label": "Practices",
         "path": "/control"
       },
@@ -265,7 +269,7 @@
     "shortName": "Requests",
     "icon": "Inbox",
     "outcome": "Collect complete, correctly classified client information through adaptive secure requests.",
-    "status": "porting",
+    "status": "built",
     "pricing": {
       "model": "metered",
       "unit": "per request pack",
@@ -291,12 +295,8 @@
     ],
     "nav": [
       {
-        "label": "Request packs",
+        "label": "Requests",
         "path": "/requests"
-      },
-      {
-        "label": "Review queue",
-        "path": "/requests/review"
       }
     ],
     "panels": [
@@ -651,7 +651,7 @@
     "shortName": "Client portal",
     "icon": "Smartphone",
     "outcome": "One phone-first portal for every service and module each client uses.",
-    "status": "porting",
+    "status": "built",
     "pricing": {
       "model": "included",
       "unit": "included with modules",

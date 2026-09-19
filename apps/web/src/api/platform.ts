@@ -5,7 +5,7 @@ import { API_BASE, ApiError, tokenStore, type LifecycleStatus, type SessionOut }
 export interface NotificationOut { id: string; kind: string; title: string; body: string | null; link: string | null; module_key: ModuleKey; read_at: string | null; created_at: string }
 export interface DocumentOut {
   id: string; client_id: string | null; module_key: ModuleKey; kind: string; filename: string; content_type: string; size_bytes: number; sha256: string;
-  description: string | null; uploaded_by_name: string | null; scan_status: 'clean' | 'infected' | 'unavailable' | 'pending'; retention_hold: boolean; retention_until: string | null; created_at: string;
+  description: string | null; uploaded_by_name: string | null; scan_status: 'clean' | 'infected' | 'unavailable' | 'pending'; retention_hold: boolean; visible_to_client: boolean; retention_until: string | null; created_at: string;
 }
 export interface BillingEventOut { id: number; module_key: ModuleKey | null; kind: string; amount_cents: number; gst_cents: number; total_cents: number; currency: string; status: string; detail: Record<string, unknown>; created_at: string }
 export interface BillingLine { module_key: ModuleKey; name: string; status: LifecycleStatus; pricing_model: string; unit: string; indicative_monthly_cents: number | null; seats: number | null }
@@ -60,6 +60,7 @@ export const platform = {
     },
     remove: (id: string) => req<void>('DELETE', `/documents/${id}`),
     setHold: (id: string, hold: boolean, until?: string, reason?: string) => req<DocumentOut>('POST', `/documents/${id}/hold`, { hold, until: until ?? null, reason: reason ?? null }),
+    share: (id: string, visible_to_client: boolean) => req<DocumentOut>('POST', `/documents/${id}/share`, { visible_to_client }),
   },
   billing: {
     summary: () => req<BillingSummary>('GET', '/billing/summary'),

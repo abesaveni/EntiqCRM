@@ -9,6 +9,12 @@ import { start as startApi, STATUS_LABEL as START_STATUS, onboardingTone, type O
 import { NewOnboardingDialog } from '@/pages/start/StartHome';
 import { practice as practiceApi, JOB_STATUS_LABEL, jobTone, type JobOut } from '@/api/practice';
 import { NewJobDialog } from '@/pages/practice/PracticeHome';
+import { requests as requestsApi, PACK_STATUS_LABEL, packTone, type PackOut } from '@/api/requests';
+import { NewRequestDialog } from '@/pages/requests/RequestsHome';
+import { clientPortalStaff, type PortalContactOut } from '@/api/portal';
+import { crm } from '@/api/crm';
+import { toast } from 'sonner';
+import { describeError } from '@/state/session';
 import { useSession } from '@/state/session';
 import type { ModuleManifest } from '@entiq/modules';
 import type { ClientOut } from '@/api/crm';
@@ -46,11 +52,11 @@ function body(m: ModuleManifest, c: ClientOut) {
     case 'sign': return <SignPanel client={c} />;
     case 'start': return <StartPanel client={c} />;
     case 'practice': return <PracticePanel client={c} />;
+    case 'requests': return <RequestsPanel client={c} />;
+    case 'client': return <ClientPortalPanel client={c} />;
     case 'workpapers': return active ? <><Row k="Ledger" v="Not linked" /><Row k="Open workpapers" v="0" /><Row k="Xero" v="Connect in Practice HQ" /></> : <Pending what="Ledger and workpapers" />;
     case 'advisory': return active ? <><Row k="Cash position" v="—" /><Row k="Next meeting" v="Not scheduled" /></> : <Pending what="Cash position and forecasts" />;
-    case 'requests': return <><Row k="Open request packs" v="0" /><p className="mt-2 text-muted-foreground">Send an adaptive document checklist.</p></>;
     case 'documents': return <><Row k="Files on record" v={c.document_count} /><p className="mt-2 text-muted-foreground">Folders, OCR and storage tiers arrive with the Documents module; base attachments are always available on the record.</p></>;
-    case 'client': return <><Row k="Portal access" v={c.primary_contact?.has_portal_access ? 'Invited' : 'Not invited'} /><Row k="Pending approvals" v="0" /></>;
     case 'billing': return <><Row k="Outstanding" v="$0.00" /><Row k="Last invoice" v="—" /></>;
     case 'lending': return <p className="text-muted-foreground">No finance applications for this client.</p>;
     default: return <p className="text-muted-foreground">{m.outcome}</p>;
@@ -144,6 +150,53 @@ function PracticePanel({ client: c }: { client: ClientOut }) {
       <ul className="mt-2 space-y-1">{openJobs.slice(0, 3).map((j) => <li key={j.id} className="flex items-center justify-between gap-2 text-[12px]"><Link to={`/practice/jobs/${j.id}`} className="truncate hover:underline">{j.title}</Link><StatusPill tone={jobTone(j.status)}>{JOB_STATUS_LABEL[j.status]}</StatusPill></li>)}</ul>
       {!readOnly && can('practice:jobs') && <Button size="sm" variant="outline" className="mt-3" onClick={() => setOpen(true)}><Plus className="mr-1 size-3.5" /> New job</Button>}
       <NewJobDialog open={open} onOpenChange={setOpen} onDone={async () => { await load(); }} meta={null} presetClient={c} />
+    </>
+  );
+}
+
+/** Live Requests panel. */
+function RequestsPanel({ client: c }: { client: ClientOut }) {
+  const readOnly = useSession((s) => s.readOnly);
+  const can = useSession((s) => s.can);
+  const [rows, setRows] = useState<PackOut[] | null>(null);
+  const [open, setOpen] = useState(false);
+  const load = () => requestsApi.packs.list({ client_id: c.id }).then(setRows).catch(() => setRows([]));
+  useEffect(() => { void load(); }, [c.id]);
+  if (!rows) return <p className="text-muted-foreground">Loading…</p>;
+  const openPacks = rows.filter((p) => !['complete', 'cancelled'].includes(p.status));
+  return (
+    <>
+      <Row k="Open requests" v={openPacks.length} />
+      <Row k="Awaiting review" v={openPacks.filter((p) => p.status === 'submitted' || p.status === 'reviewing').length} />
+      {openPacks.some((p) => p.exceptions > 0) && <Row k="Flagged items" v={<span className="text-warn">{openPacks.reduce((a, p) => a + p.exceptions, 0)}</span>} />}
+      <ul className="mt-2 space-y-1">{openPacks.slice(0, 3).map((p) => <li key={p.id} className="flex items-center justify-between gap-2 text-[12px]"><Link to={`/requests/${p.id}`} className="truncate hover:underline">{p.title}</Link><StatusPill tone={packTone(p.status)}>{PACK_STATUS_LABEL[p.status]}</StatusPill></li>)}</ul>
+      {!readOnly && can('requests:create') && <Button size="sm" variant="outline" className="mt-3" onClick={() => setOpen(true)}><Plus className="mr-1 size-3.5" /> New request</Button>}
+      <NewRequestDialog open={open} onOpenChange={setOpen} onDone={async () => { await load(); }} presetClient={c} />
+    </>
+  );
+}
+
+/** Live Client portal panel: who has access, invite / revoke per contact. */
+function ClientPortalPanel({ client: c }: { client: ClientOut }) {
+  const readOnly = useSession((s) => s.readOnly);
+  const can = useSession((s) => s.can);
+  const [rows, setRows] = useState<PortalContactOut[] | null>(null);
+  const load = () => clientPortalStaff.contacts(c.id).then(setRows).catch(() => setRows([]));
+  useEffect(() => { void load(); }, [c.id]);
+  if (!rows) return <p className="text-muted-foreground">Loading…</p>;
+  const withAccess = rows.filter((r) => r.has_portal_access);
+  return (
+    <>
+      <Row k="Portal access" v={withAccess.length ? `${withAccess.length} of ${rows.length} contacts` : 'Not invited'} />
+      <ul className="mt-2 space-y-1">
+        {rows.filter((r) => r.email).slice(0, 4).map((r) => (
+          <li key={r.contact_id} className="flex items-center justify-between gap-2 text-[12px]"><span className="truncate">{r.name}{r.has_portal_access ? <span className="text-success"> · active</span> : ''}</span>
+            {!readOnly && (r.has_portal_access ? (can('client:manage') && <button className="text-muted-foreground hover:text-error" onClick={() => void clientPortalStaff.revoke(r.contact_id).then(load).catch((e) => toast.error(describeError(e)))}>revoke</button>) : (can('client:invite') && <button className="text-primary hover:underline" onClick={() => void clientPortalStaff.invite(r.contact_id).then(() => { toast.success('Invitation sent'); void load(); }).catch((e) => toast.error(describeError(e)))}>invite</button>))}
+          </li>
+        ))}
+        {rows.every((r) => !r.email) && <li className="text-[12px] text-muted-foreground">Add a contact with an email to invite them.</li>}
+      </ul>
+      <Link to="/client" className="mt-3 inline-block text-[12px] text-primary hover:underline">Manage portal →</Link>
     </>
   );
 }

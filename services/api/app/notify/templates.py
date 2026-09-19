@@ -122,3 +122,55 @@ def start_activated(*, name: str, practice: str, prospect: str) -> tuple[str, st
     text = f"Hi {name},\n\nOnboarding is complete and {prospect} is now an active client of {practice}. Your engagement letter is signed and your services are scheduled. We'll be in touch with next steps.\n\n{practice}"
     html = _wrap("Welcome aboard", [f"Hi {escape(name)},", f"Onboarding is complete and <strong>{escape(prospect)}</strong> is now an active client of <strong>{escape(practice)}</strong>.", "Your engagement letter is signed and your services are scheduled. We'll be in touch with next steps."])
     return subject, text, html
+
+
+def request_sent(*, name: str, practice: str, title: str, message: str | None, url: str, due: str | None, items: list[str], reminder: bool = False) -> tuple[str, str, str]:
+    subject = f"{'Reminder: ' if reminder else ''}{practice} needs some information — {title}"
+    lst = "".join(f"  • {i}\n" for i in items[:15]) + (f"  … and {len(items) - 15} more\n" if len(items) > 15 else "")
+    note = f"\n\n{message}" if message else ""
+    text = f"Hi {name},\n\n{practice} has asked for the following{' (still outstanding)' if reminder else ''}:{note}\n\n{lst}\nUpload securely here{f' by {due}' if due else ''}:\n{url}\n\nYou can mark anything that does not apply, and come back to the same link any time."
+    html = _wrap(title, [f"Hi {escape(name)},", f"<strong>{escape(practice)}</strong> has asked for the following{' (still outstanding)' if reminder else ''}:", *([f"<em>{escape(message)}</em>"] if message else []), "<ul>" + "".join(f"<li>{escape(i)}</li>" for i in items[:15]) + "</ul>", "You can mark anything that does not apply, and come back to the same link any time."], ("Upload securely", url), f"Please respond by {escape(due)}." if due else None)
+    return subject, text, html
+
+
+def request_item_rejected(*, name: str, practice: str, title: str, item: str, reason: str, url: str) -> tuple[str, str, str]:
+    subject = f"{practice}: one item needs another look — {item}"
+    text = f"Hi {name},\n\nThanks for what you sent for {title}. One item needs another look:\n\n  • {item}\n    {reason}\n\nRe-upload here:\n{url}\n\n{practice}"
+    html = _wrap(subject, [f"Hi {escape(name)},", f"Thanks for what you sent for <strong>{escape(title)}</strong>. One item needs another look:", f"<strong>{escape(item)}</strong> — {escape(reason)}"], ("Re-upload", url))
+    return subject, text, html
+
+
+def portal_invite(*, name: str, practice: str, client: str, url: str) -> tuple[str, str, str]:
+    subject = f"{practice} has set up your client portal"
+    text = f"Hi {name},\n\n{practice} has given you access to a secure portal for {client}: documents, requests, agreements and messages in one place, no password needed.\n\nSign in here (link valid for 14 days; after that use “email me a link” on the portal page):\n{url}\n\n{practice}"
+    html = _wrap("Your client portal is ready", [f"Hi {escape(name)},", f"<strong>{escape(practice)}</strong> has given you access to a secure portal for <strong>{escape(client)}</strong>: documents, requests, agreements and messages in one place — no password needed."], ("Open the portal", url), "This link is valid for 14 days. Afterwards, use “email me a link” on the portal page.")
+    return subject, text, html
+
+
+def portal_login(*, name: str, practice: str, client: str, url: str) -> tuple[str, str, str]:
+    subject = f"Your sign-in link for {practice}"
+    text = f"Hi {name},\n\nHere is your one-time sign-in link for the {client} portal (valid 30 minutes):\n{url}\n\nIf you did not request this, ignore this email."
+    html = _wrap("Sign in to your portal", [f"Hi {escape(name)},", f"Here is your one-time sign-in link for the <strong>{escape(client)}</strong> portal at {escape(practice)}."], ("Sign in", url), "Valid for 30 minutes. If you did not request this, ignore this email.")
+    return subject, text, html
+
+
+def portal_message(*, name: str, practice: str, author: str, body: str, url: str) -> tuple[str, str, str]:
+    subject = f"New message from {practice}"
+    text = f"Hi {name},\n\n{author} at {practice} wrote:\n\n{body}\n\nReply in your portal:\n{url}"
+    html = _wrap(subject, [f"Hi {escape(name)},", f"<strong>{escape(author)}</strong> at {escape(practice)} wrote:", f"<em>{escape(body)}</em>"], ("Reply in the portal", url))
+    return subject, text, html
+
+
+def support_ack(*, name: str, number: int, subject: str, priority: str, first_response_hours: float) -> tuple[str, str, str]:
+    subj = f"[#{number}] We have your request: {subject}"
+    text = f"Hi {name},\n\nThanks — your support request #{number} ({priority} priority) is in the queue. Our first response is due within {first_response_hours} hours.\n\nEnTIQ Support"
+    html = _wrap(f"Ticket #{number} received", [f"Hi {escape(name)},", f"Your support request <strong>#{number}</strong> ({escape(priority)} priority) is in the queue. Our first response is due within <strong>{first_response_hours} hours</strong>."])
+    return subj, text, html
+
+
+def support_reply(*, name: str, number: int, subject: str, author: str, body: str, url: str) -> tuple[str, str, str]:
+    subj = f"[#{number}] {author} replied: {subject}"
+    text = f"Hi {name},\n\n{author} from EnTIQ Support replied on #{number}:\n\n{body}\n\nView and reply:\n{url}"
+    html = _wrap(f"Reply on ticket #{number}", [f"Hi {escape(name)},", f"<strong>{escape(author)}</strong> from EnTIQ Support replied:", f"<em>{escape(body)}</em>"], ("View ticket", url))
+    return subj, text, html
+
